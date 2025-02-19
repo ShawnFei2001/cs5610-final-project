@@ -1,20 +1,25 @@
 import { Form, Button, Container, Row, Col } from "react-bootstrap";
+import { Link, useParams } from "react-router-dom";
+import * as db from "../../Database";
 
 export default function AssignmentEditor() {
+  const { cid, aid } = useParams(); // Retrieve course ID and assignment ID
+  const assignment = db.assignments.find(a => a._id === aid); // Find assignment by ID
+
+  if (!assignment) {
+    return <Container className="mt-4"><h4>Assignment not found</h4></Container>;
+  }
+
   return (
     <Container className="mt-4">
-      <h4>Assignment Name</h4>
-      <Form.Control type="text" defaultValue="A1 - ENV + HTML" className="mb-3" />
-      
+      <h4>{assignment.title}</h4>
+      <Form.Control type="text" defaultValue={assignment.title} className="mb-3" />
+
       <Form.Group className="mb-3">
         <Form.Label>Description</Form.Label>
-        <Form.Control
-          as="textarea"
-          rows={4}
-          defaultValue="The assignment is available online. Submit a link to the landing page of your Web application running on Netlify."
-        />
+        <Form.Control as="textarea" rows={4} defaultValue={assignment.description} />
       </Form.Group>
-      
+
       <Row className="mb-3">
         <Col md={3}>
           <Form.Group>
@@ -23,7 +28,7 @@ export default function AssignmentEditor() {
           </Form.Group>
         </Col>
       </Row>
-      
+
       <Row className="mb-3">
         <Col md={6}>
           <Form.Group>
@@ -46,7 +51,7 @@ export default function AssignmentEditor() {
           </Form.Group>
         </Col>
       </Row>
-      
+
       <Form.Group className="mb-3">
         <Form.Label>Submission Type</Form.Label>
         <Form.Select>
@@ -55,7 +60,7 @@ export default function AssignmentEditor() {
           <option>External Tool</option>
         </Form.Select>
       </Form.Group>
-      
+
       <Form.Group className="mb-3">
         <Form.Label>Online Entry Options</Form.Label>
         <div>
@@ -66,7 +71,7 @@ export default function AssignmentEditor() {
           <Form.Check type="checkbox" label="File Upload" />
         </div>
       </Form.Group>
-      
+
       <Row className="mb-3">
         <Col md={6}>
           <Form.Group>
@@ -81,7 +86,7 @@ export default function AssignmentEditor() {
           </Form.Group>
         </Col>
       </Row>
-      
+
       <Row className="mb-3">
         <Col md={6}>
           <Form.Group>
@@ -96,8 +101,17 @@ export default function AssignmentEditor() {
           </Form.Group>
         </Col>
       </Row>
-      
-      <Button variant="primary">Save</Button>
+
+      <Row>
+        <Col>
+          <Link to={`/Kambaz/Courses/${cid}/Assignments`}>
+            <Button variant="secondary" className="me-2">Cancel</Button>
+          </Link>
+          <Link to={`/Kambaz/Courses/${cid}/Assignments`}>
+            <Button variant="primary">Save</Button>
+          </Link>
+        </Col>
+      </Row>
     </Container>
   );
 }

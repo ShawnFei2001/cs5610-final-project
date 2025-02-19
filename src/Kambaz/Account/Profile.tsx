@@ -53,8 +53,8 @@ export default function Profile() {
             </FormSelect>
           </Col>
           <Link to="/Kambaz/Account/Signin">
-              <Button variant="danger" className="w-50">Sign out</Button>
-            </Link>
+            <Button variant="danger" className="w-50">Sign out</Button>
+          </Link>
         </FormGroup>
       </Form>
     </div>
