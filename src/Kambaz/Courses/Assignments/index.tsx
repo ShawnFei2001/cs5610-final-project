@@ -1,43 +1,99 @@
-import { BsGripVertical } from "react-icons/bs";
-import { MdAssignment } from "react-icons/md";
-import { FaCheckCircle } from "react-icons/fa";
-import { FaCircle } from "react-icons/fa6";
-import { IoEllipsisVertical } from "react-icons/io5";
+import { useState } from "react";
+import { useSelector, useDispatch } from "react-redux";
 import { useParams } from "react-router";
-import * as db from "../../Database";
+import { addAssignment, deleteAssignment} from "./reducer";
+import AssignmentsControls from "./AssignmentsControls";
+import AssignmentEditor from "./AssignmentEditor";
+import { IoEllipsisVertical } from "react-icons/io5";
+import { LuNotebookPen } from "react-icons/lu";
+import { BsGripVertical, BsPlus } from "react-icons/bs";
+import AssignmentControlButtons from "./AssignmentControlButtons";
 
 export default function Assignments() {
+  const { currentUser } = useSelector((state: any) => state.accountReducer);
   const { cid } = useParams();
-  const assignments = db.assignments;
+  const { assignments } = useSelector((state: any) => state.assignmentsReducer);
+  const dispatch = useDispatch();
+
+  const [assignmentName, setAssignmentName] = useState("");
+  const [isEditing, setIsEditing] = useState(false);
+
+  const handleSaveAssignment = (assignment: any) => {
+    dispatch(addAssignment({ ...assignment, course: cid }));
+    setAssignmentName("");
+    setIsEditing(false);
+  };
 
   return (
-    <div>
-      <br /><br /><br /><br />
+    <div className="d-flex flex-column">
+      {currentUser?.role === "FACULTY" && (
+        <div className="mb-4">
+          <AssignmentsControls
+            assignmentName={assignmentName}
+            setAssignmentName={setAssignmentName}
+            addAssignment={handleSaveAssignment}
+          />
+        </div>
+      )}
+
+      {isEditing && (
+        <AssignmentEditor
+          show={isEditing}
+          handleClose={() => setIsEditing(false)}
+          dialogTitle="Add Assignment"
+          assignmentName={assignmentName}
+          setAssignmentName={setAssignmentName}
+          addAssignment={handleSaveAssignment}
+        />
+      )}
+
       <ul id="wd-assignments" className="list-group rounded-0">
+        {
+          <li className="wd-module list-group-item p-0 border-gray">
+            <div className="wd-title p-3 ps-2 bg-secondary d-flex align-items-center justify-content-between">
+              <div className="d-flex align-items-center gap-3">
+                <BsGripVertical className="fs-3" />
+                <h5 className="mb-0">ASSIGNMENTS</h5>
+              </div>
+              <div className="d-flex align-items-center gap-3">
+                <h6 className="mb-0 text-muted">40% of Total</h6>
+                <BsPlus className="fs-4" />
+                <IoEllipsisVertical className="fs-4" />
+              </div>
+            </div>
+          </li>
+        }
         {assignments
-          .filter((assignment) => assignment.course === cid)
-          .map((assignment) => (
-            <li key={assignment._id} className="wd-assignment list-group-item p-3 ps-1 d-flex align-items-center border-start border-3 border-success">
-              <BsGripVertical className="me-2 fs-3 text-secondary" />
-              <MdAssignment className="me-2 fs-4" />
-              <div className="flex-grow-1">
-                <a
-                  href={`#/Kambaz/Courses/${cid}/Assignments/${assignment._id}`}
-                  className="fw-bold text-dark text-decoration-none"
-                >
-                  {assignment.title}
-                </a>
-                <div className="text-muted small">
-                  <span className="text-danger">Multiple Modules</span> |
-                  <strong> Not available until </strong> May 6 at 12:00am |
-                  <strong> Due </strong> May 13 at 11:59pm | 100 pts
+          .filter((assignment: any) => assignment.course === cid)
+          .map((assignment: any) => (
+            <li key={assignment._id} className="wd-assignment list-group-item border-gray">
+              <div className="d-flex justify-content-between align-items-center">
+                <div className="d-flex align-items-center gap-2">
+                  <div className="d-flex flex-row align-items-center">
+                    <BsGripVertical className="fs-5 text-secondary" />
+                    <LuNotebookPen className="text-success fs-5" />
+                  </div>
+                  <div className="d-flex flex-column">
+                    <a
+                      href={`#/Kambaz/Courses/${cid}/Assignments/${assignment._id}`}
+                      className="fw-bold text-dark text-decoration-none"
+                    >
+                      {assignment.title}
+                    </a>
+                    <div className="text-muted small">
+                      <span className="text-danger">Multiple Assignments</span> |
+                      <strong> Not available until </strong> {assignment.availableFrom || "Not set"} |
+                      <strong> Due </strong> {assignment.dueDate || "Not set"} | {assignment.points} pts
+                    </div>
+                  </div>
+                </div>
+                <div className="d-flex flex-row">
+            <AssignmentControlButtons
+              assignmentId={assignment._id}
+              deleteAssignment={(assignmentId) => dispatch(deleteAssignment(assignmentId))}
+            />
                 </div>
               </div>
-              <span className="me-1 position-relative">
-                <FaCheckCircle style={{ top: "2px" }} className="text-success me-1 position-absolute fs-5" />
-                <FaCircle className="text-white me-1 fs-6" />
-                <IoEllipsisVertical className="fs-4" />
-              </span>
             </li>
           ))}
       </ul>

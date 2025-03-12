@@ -1,88 +1,80 @@
 import { Form, Button, Container, Row, Col } from "react-bootstrap";
-import { Link, useParams } from "react-router-dom";
-import * as db from "../../Database";
+import { Link, useParams, useNavigate } from "react-router-dom";
+import { useState } from "react";
+import { useSelector, useDispatch } from "react-redux";
+import { addAssignment, updateAssignment } from "./reducer";
 
 export default function AssignmentEditor() {
-  const { cid, aid } = useParams(); // Retrieve course ID and assignment ID
-  const assignment = db.assignments.find(a => a._id === aid); // Find assignment by ID
+  const { currentUser } = useSelector((state: any) => state.accountReducer);
+  const { cid, aid } = useParams(); // Get course ID and assignment ID
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
 
-  if (!assignment) {
-    return <Container className="mt-4"><h4>Assignment not found</h4></Container>;
-  }
+  // Fetch assignments from Redux state
+  const assignments = useSelector((state: any) => state.assignmentsReducer.assignments);
+
+  // Find assignment by ID (if editing an existing one)
+  const existingAssignment = assignments.find((a: any) => a._id === aid);
+
+  // Define assignment state (prefill existing or new values)
+  const [assignment, setAssignment] = useState(
+    existingAssignment || {
+      _id: aid || "", // If new, generate ID on save
+      title: "",
+      description: "",
+      points: 100,
+      dueDate: "",
+      availableFrom: "",
+      availableUntil: "",
+      course: cid,
+    }
+  );
+
+  // Handle input changes
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    setAssignment({ ...assignment, [e.target.name]: e.target.value });
+  };
+
+  // Handle form submission
+  const handleSave = () => {
+    if (existingAssignment) {
+      dispatch(updateAssignment(assignment)); // Update existing assignment
+    } else {
+      dispatch(addAssignment({ ...assignment, _id: new Date().getTime().toString() })); // Add new assignment
+    }
+    navigate(`/Kambaz/Courses/${cid}/Assignments`); // Redirect back to assignments page
+  };
 
   return (
     <Container className="mt-4">
-      <h4>{assignment.title}</h4>
-      <Form.Control type="text" defaultValue={assignment.title} className="mb-3" />
+      <h4>{existingAssignment ? "Edit Assignment" : "New Assignment"}</h4>
+      <Form.Control type="text" name="title" value={assignment.title} onChange={handleChange} className="mb-3" />
 
       <Form.Group className="mb-3">
         <Form.Label>Description</Form.Label>
-        <Form.Control as="textarea" rows={4} defaultValue={assignment.description} />
+        <Form.Control as="textarea" name="description" rows={4} value={assignment.description} onChange={handleChange} />
       </Form.Group>
 
       <Row className="mb-3">
         <Col md={3}>
           <Form.Group>
             <Form.Label>Points</Form.Label>
-            <Form.Control type="number" defaultValue={100} />
+            <Form.Control type="number" name="points" value={assignment.points} onChange={handleChange} />
           </Form.Group>
         </Col>
       </Row>
 
       <Row className="mb-3">
-        <Col md={6}>
-          <Form.Group>
-            <Form.Label>Assignment Group</Form.Label>
-            <Form.Select>
-              <option>Assignments</option>
-              <option>Quizzes</option>
-              <option>Projects</option>
-            </Form.Select>
-          </Form.Group>
-        </Col>
-        <Col md={6}>
-          <Form.Group>
-            <Form.Label>Display Grade as</Form.Label>
-            <Form.Select>
-              <option>Percentage</option>
-              <option>Points</option>
-              <option>Complete/Incomplete</option>
-            </Form.Select>
-          </Form.Group>
-        </Col>
-      </Row>
-
-      <Form.Group className="mb-3">
-        <Form.Label>Submission Type</Form.Label>
-        <Form.Select>
-          <option>Online</option>
-          <option>Paper</option>
-          <option>External Tool</option>
-        </Form.Select>
-      </Form.Group>
-
-      <Form.Group className="mb-3">
-        <Form.Label>Online Entry Options</Form.Label>
-        <div>
-          <Form.Check type="checkbox" label="Text Entry" />
-          <Form.Check type="checkbox" label="Website URL" defaultChecked />
-          <Form.Check type="checkbox" label="Media Recordings" />
-          <Form.Check type="checkbox" label="Student Annotation" />
-          <Form.Check type="checkbox" label="File Upload" />
-        </div>
-      </Form.Group>
-
-      <Row className="mb-3">
-        <Col md={6}>
-          <Form.Group>
-            <Form.Label>Assign To</Form.Label>
-            <Form.Control type="text" defaultValue="Everyone" />
-          </Form.Group>
-        </Col>
         <Col md={6}>
           <Form.Group>
             <Form.Label>Due Date</Form.Label>
-            <Form.Control type="date" defaultValue="2024-05-13" />
+            <Form.Control type="date" name="dueDate" value={assignment.dueDate} onChange={handleChange} />
+          </Form.Group>
+        </Col>
+        <Col md={6}>
+          <Form.Group>
+            <Form.Label>Available from</Form.Label>
+            <Form.Control type="date" name="availableFrom" value={assignment.availableFrom} onChange={handleChange} />
           </Form.Group>
         </Col>
       </Row>
@@ -90,28 +82,31 @@ export default function AssignmentEditor() {
       <Row className="mb-3">
         <Col md={6}>
           <Form.Group>
-            <Form.Label>Available from</Form.Label>
-            <Form.Control type="date" defaultValue="2024-05-06" />
-          </Form.Group>
-        </Col>
-        <Col md={6}>
-          <Form.Group>
             <Form.Label>Available until</Form.Label>
-            <Form.Control type="date" defaultValue="2024-05-20" />
+            <Form.Control type="date" name="availableUntil" value={assignment.availableUntil} onChange={handleChange} />
           </Form.Group>
         </Col>
       </Row>
-
-      <Row>
-        <Col>
-          <Link to={`/Kambaz/Courses/${cid}/Assignments`}>
-            <Button variant="secondary" className="me-2">Cancel</Button>
-          </Link>
-          <Link to={`/Kambaz/Courses/${cid}/Assignments`}>
-            <Button variant="primary">Save</Button>
-          </Link>
-        </Col>
-      </Row>
+      {currentUser?.role === "FACULTY" ? (
+        <div className="mb-4">
+          <Row>
+            <Col>
+              <Link to={`/Kambaz/Courses/${cid}/Assignments`}>
+                <Button variant="secondary" className="me-2">Cancel</Button>
+              </Link>
+              <Button variant="primary" onClick={handleSave}>Save</Button>
+            </Col>
+          </Row>
+        </div>
+      ) : (<div className="mb-4">
+        <Row>
+          <Col>
+            <Link to={`/Kambaz/Courses/${cid}/Assignments`}>
+              <Button variant="secondary">Back</Button>
+            </Link>
+          </Col>
+        </Row>
+      </div>)}
     </Container>
   );
 }
