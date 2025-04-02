@@ -40,7 +40,7 @@ export default function Kambaz() {
       alert("Course name and description are required.");
       return;
     }
-  
+
     const newCourse = await userClient.createCourse(course);
     setCourses([...courses, newCourse]);
     setCourse({ name: "", description: "" });
@@ -68,15 +68,8 @@ export default function Kambaz() {
               path="/Dashboard"
               element={
                 <ProtectedRoute>
-                  <Dashboard
-                    courses={courses}
-                    course={course}
-                    setCourse={setCourse}
-                    addNewCourse={addNewCourse}
-                    deleteCourse={deleteCourse}
-                    updateCourse={updateCourse}
-                    currentUser={currentUser}
-                  />
+                  <Dashboard />
+
                 </ProtectedRoute>
               }
             />
