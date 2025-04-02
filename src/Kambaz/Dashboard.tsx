@@ -2,11 +2,17 @@ import { Row, Col, Card, Button, FormControl } from "react-bootstrap";
 import { Link } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import { setCourse, addCourse, deleteCourse, updateCourse } from "./Courses/reducer";
-import { toggleShowAllCourses, enroll, unenroll } from "./Enrollments/reducer";
+import {
+  toggleShowAllCourses,
+  enroll,
+  unenroll,
+  setEnrollments
+} from "./Enrollments/reducer";
+import * as enrollmentsClient from "./Enrollments/client";
+import { useEffect } from "react";
 
 export default function Dashboard() {
   const { currentUser } = useSelector((state: any) => state.accountReducer);
-  // Access course and enrollment states
   const courseState = useSelector((state: any) => state.courseReducer);
   const enrollmentState = useSelector((state: any) => state.enrollmentReducer);
 
@@ -15,7 +21,18 @@ export default function Dashboard() {
 
   const dispatch = useDispatch();
 
-  // Course management functions
+  useEffect(() => {
+    const fetchEnrollments = async () => {
+      try {
+        const serverEnrollments = await enrollmentsClient.getAllEnrollments();
+        dispatch(setEnrollments(serverEnrollments));
+      } catch (error) {
+        console.error("Failed to load enrollments:", error);
+      }
+    };
+    fetchEnrollments();
+  }, [dispatch]);
+
   const handleSetCourse = (newCourseData: any) => {
     dispatch(setCourse(newCourseData));
   };
@@ -32,24 +49,32 @@ export default function Dashboard() {
     dispatch(updateCourse());
   };
 
-  // Enrollment management functions
   const handleToggleShowAllCourses = () => {
     dispatch(toggleShowAllCourses());
   };
 
-  const handleEnroll = (courseId: string) => {
+  const handleEnroll = async (courseId: string) => {
     if (currentUser) {
-      dispatch(enroll({ userId: currentUser._id, courseId }));
+      try {
+        await enrollmentsClient.enrollInCourse(currentUser._id, courseId);
+        dispatch(enroll({ userId: currentUser._id, courseId }));
+      } catch (error) {
+        console.error("Failed to enroll:", error);
+      }
     }
   };
 
-  const handleUnenroll = (courseId: string) => {
+  const handleUnenroll = async (courseId: string) => {
     if (currentUser) {
-      dispatch(unenroll({ userId: currentUser._id, courseId }));
+      try {
+        await enrollmentsClient.unenrollFromCourse(currentUser._id, courseId);
+        dispatch(unenroll({ userId: currentUser._id, courseId }));
+      } catch (error) {
+        console.error("Failed to unenroll:", error);
+      }
     }
   };
 
-  // Check if user is enrolled in a course
   const isEnrolled = (courseId: string) => {
     return enrollments.some(
       (enrollment: any) =>
@@ -58,25 +83,21 @@ export default function Dashboard() {
     );
   };
 
-  // Handle course navigation with enrollment check
   const handleCourseNavigation = (event: React.MouseEvent, courseId: string) => {
     if (currentUser?.role === "STUDENT" && !isEnrolled(courseId)) {
       event.preventDefault();
-      // Stay on dashboard if student is not enrolled
-      return;
     }
   };
 
-  // Filter courses based on enrollment status and showAllCourses flag
   const filteredCourses = currentUser?.role === "STUDENT" && !showAllCourses
     ? courses.filter((course: any) => isEnrolled(course._id))
     : courses;
 
   return (
     <div id="wd-dashboard">
-      <h1 id="wd-dashboard-title">Dashboard</h1> <hr />
+      <h1 id="wd-dashboard-title">Dashboard</h1>
+      <hr />
 
-      {/* Student-specific Enrollments button */}
       {currentUser?.role === "STUDENT" && (
         <div className="mb-3">
           <button
@@ -88,20 +109,11 @@ export default function Dashboard() {
         </div>
       )}
 
-      {/* Faculty course form */}
       {currentUser?.role === "FACULTY" && (
         <>
           <h5>New Course
-            <button className="btn btn-primary float-end"
-              id="wd-add-new-course-click"
-              onClick={handleAddNewCourse}>
-              Add
-            </button>
-            <button className="btn btn-warning float-end me-2"
-              onClick={handleUpdateCourse}
-              id="wd-update-course-click">
-              Update
-            </button>
+            <button className="btn btn-primary float-end" onClick={handleAddNewCourse}>Add</button>
+            <button className="btn btn-warning float-end me-2" onClick={handleUpdateCourse}>Update</button>
           </h5>
           <br />
           <FormControl
@@ -145,7 +157,6 @@ export default function Dashboard() {
                       {course.description}
                     </Card.Text>
 
-                    {/* Conditional rendering based on user role */}
                     {currentUser?.role === "STUDENT" ? (
                       isEnrolled(course._id) ? (
                         <Button
@@ -172,24 +183,21 @@ export default function Dashboard() {
                       <Button variant="primary">Go</Button>
                     )}
 
-                    {/* Faculty-specific buttons */}
                     {currentUser?.role === "FACULTY" && (
                       <>
                         <button
-                          onClick={(event) => {
-                            event.preventDefault();
+                          onClick={(e) => {
+                            e.preventDefault();
                             handleDeleteCourse(course._id);
                           }}
                           className="btn btn-danger float-end"
-                          id="wd-delete-course-click"
                         >
                           Delete
                         </button>
 
                         <button
-                          id="wd-edit-course-click"
-                          onClick={(event) => {
-                            event.preventDefault();
+                          onClick={(e) => {
+                            e.preventDefault();
                             handleSetCourse(course);
                           }}
                           className="btn btn-warning me-2 float-end"

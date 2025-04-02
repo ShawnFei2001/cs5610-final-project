@@ -3,7 +3,7 @@ import AccountNavigation from "./Navigation";
 import Signin from "./Signin";
 import Profile from "./Profile";
 import Signup from "./Signup";
-import "./Account.css"; // Import CSS file
+import "./Account.css"; 
 import { useSelector } from "react-redux";
 
 export default function Account() {

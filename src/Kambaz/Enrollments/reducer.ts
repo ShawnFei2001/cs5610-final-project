@@ -25,26 +25,30 @@ const enrollmentSlice = createSlice({
     },
     enroll: (state, action: PayloadAction<{ userId: string; courseId: string }>) => {
       const { userId, courseId } = action.payload;
-      // Check if the enrollment already exists
       const alreadyEnrolled = state.enrollments.some(
-        enrollment => enrollment.user === userId && enrollment.course === courseId
+        (enrollment) => enrollment.user === userId && enrollment.course === courseId
       );
-
       if (!alreadyEnrolled) {
-        state.enrollments.push({
-          user: userId,
-          course: courseId
-        });
+        state.enrollments.push({ user: userId, course: courseId });
       }
     },
     unenroll: (state, action: PayloadAction<{ userId: string; courseId: string }>) => {
       const { userId, courseId } = action.payload;
       state.enrollments = state.enrollments.filter(
-        enrollment => !(enrollment.user === userId && enrollment.course === courseId)
+        (enrollment) => !(enrollment.user === userId && enrollment.course === courseId)
       );
-    }
-  }
+    },
+    setEnrollments: (state, action: PayloadAction<Enrollment[]>) => {
+      state.enrollments = action.payload;
+    },
+  },
 });
 
-export const { toggleShowAllCourses, enroll, unenroll } = enrollmentSlice.actions;
+export const {
+  toggleShowAllCourses,
+  enroll,
+  unenroll,
+  setEnrollments,
+} = enrollmentSlice.actions;
+
 export default enrollmentSlice.reducer;

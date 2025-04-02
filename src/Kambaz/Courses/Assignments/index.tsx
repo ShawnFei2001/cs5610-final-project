@@ -1,13 +1,14 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { useParams } from "react-router";
-import { addAssignment, deleteAssignment} from "./reducer";
+import { setAssignments, addAssignment, deleteAssignment as deleteAssignmentAction} from "./reducer";
 import AssignmentsControls from "./AssignmentsControls";
 import AssignmentEditor from "./AssignmentEditor";
 import { IoEllipsisVertical } from "react-icons/io5";
 import { LuNotebookPen } from "react-icons/lu";
 import { BsGripVertical, BsPlus } from "react-icons/bs";
 import AssignmentControlButtons from "./AssignmentControlButtons";
+import * as assignmentsClient from "./client";
 
 export default function Assignments() {
   const { currentUser } = useSelector((state: any) => state.accountReducer);
@@ -18,10 +19,26 @@ export default function Assignments() {
   const [assignmentName, setAssignmentName] = useState("");
   const [isEditing, setIsEditing] = useState(false);
 
-  const handleSaveAssignment = (assignment: any) => {
-    dispatch(addAssignment({ ...assignment, course: cid }));
+  useEffect(() => {
+    const fetchAssignments = async () => {
+      if (!cid) return;
+      const serverAssignments = await assignmentsClient.findAssignmentsForCourse(cid);
+      dispatch(setAssignments(serverAssignments));
+    };
+    fetchAssignments();
+  }, [cid, dispatch]);
+
+  const handleSaveAssignment = async (assignment: any) => {
+    if (!cid) return;
+    const newAssignment = await assignmentsClient.createAssignmentForCourse(cid, assignment);
+    dispatch(addAssignment(newAssignment));
     setAssignmentName("");
     setIsEditing(false);
+  };
+
+  const handleDeleteAssignment = async (assignmentId: string) => {
+    await assignmentsClient.deleteAssignment(assignmentId);
+    dispatch(deleteAssignmentAction(assignmentId));
   };
 
   return (
@@ -48,21 +65,20 @@ export default function Assignments() {
       )}
 
       <ul id="wd-assignments" className="list-group rounded-0">
-        {
-          <li className="wd-module list-group-item p-0 border-gray">
-            <div className="wd-title p-3 ps-2 bg-secondary d-flex align-items-center justify-content-between">
-              <div className="d-flex align-items-center gap-3">
-                <BsGripVertical className="fs-3" />
-                <h5 className="mb-0">ASSIGNMENTS</h5>
-              </div>
-              <div className="d-flex align-items-center gap-3">
-                <h6 className="mb-0 text-muted">40% of Total</h6>
-                <BsPlus className="fs-4" />
-                <IoEllipsisVertical className="fs-4" />
-              </div>
+        <li className="wd-module list-group-item p-0 border-gray">
+          <div className="wd-title p-3 ps-2 bg-secondary d-flex align-items-center justify-content-between">
+            <div className="d-flex align-items-center gap-3">
+              <BsGripVertical className="fs-3" />
+              <h5 className="mb-0">ASSIGNMENTS</h5>
             </div>
-          </li>
-        }
+            <div className="d-flex align-items-center gap-3">
+              <h6 className="mb-0 text-muted">40% of Total</h6>
+              <BsPlus className="fs-4" />
+              <IoEllipsisVertical className="fs-4" />
+            </div>
+          </div>
+        </li>
+
         {assignments
           .filter((assignment: any) => assignment.course === cid)
           .map((assignment: any) => (
@@ -88,10 +104,10 @@ export default function Assignments() {
                   </div>
                 </div>
                 <div className="d-flex flex-row">
-            <AssignmentControlButtons
-              assignmentId={assignment._id}
-              deleteAssignment={(assignmentId) => dispatch(deleteAssignment(assignmentId))}
-            />
+                  <AssignmentControlButtons
+                    assignmentId={assignment._id}
+                    deleteAssignment={handleDeleteAssignment}
+                  />
                 </div>
               </div>
             </li>

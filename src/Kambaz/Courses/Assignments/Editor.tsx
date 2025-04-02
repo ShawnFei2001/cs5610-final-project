@@ -3,23 +3,20 @@ import { Link, useParams, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { addAssignment, updateAssignment } from "./reducer";
+import * as assignmentsClient from "./client";
 
 export default function AssignmentEditor() {
   const { currentUser } = useSelector((state: any) => state.accountReducer);
-  const { cid, aid } = useParams(); // Get course ID and assignment ID
+  const { cid, aid } = useParams();
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
-  // Fetch assignments from Redux state
   const assignments = useSelector((state: any) => state.assignmentsReducer.assignments);
-
-  // Find assignment by ID (if editing an existing one)
   const existingAssignment = assignments.find((a: any) => a._id === aid);
 
-  // Define assignment state (prefill existing or new values)
   const [assignment, setAssignment] = useState(
     existingAssignment || {
-      _id: aid || "", // If new, generate ID on save
+      _id: aid || "",
       title: "",
       description: "",
       points: 100,
@@ -30,19 +27,19 @@ export default function AssignmentEditor() {
     }
   );
 
-  // Handle input changes
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     setAssignment({ ...assignment, [e.target.name]: e.target.value });
   };
 
-  // Handle form submission
-  const handleSave = () => {
+  const handleSave = async () => {
     if (existingAssignment) {
-      dispatch(updateAssignment(assignment)); // Update existing assignment
+      const updated = await assignmentsClient.updateAssignment(assignment);
+      dispatch(updateAssignment(updated));
     } else {
-      dispatch(addAssignment({ ...assignment, _id: new Date().getTime().toString() })); // Add new assignment
+      const created = await assignmentsClient.createAssignmentForCourse(cid as string, assignment);
+      dispatch(addAssignment(created));
     }
-    navigate(`/Kambaz/Courses/${cid}/Assignments`); // Redirect back to assignments page
+    navigate(`/Kambaz/Courses/${cid}/Assignments`);
   };
 
   return (
@@ -87,6 +84,7 @@ export default function AssignmentEditor() {
           </Form.Group>
         </Col>
       </Row>
+
       {currentUser?.role === "FACULTY" ? (
         <div className="mb-4">
           <Row>
@@ -98,15 +96,17 @@ export default function AssignmentEditor() {
             </Col>
           </Row>
         </div>
-      ) : (<div className="mb-4">
-        <Row>
-          <Col>
-            <Link to={`/Kambaz/Courses/${cid}/Assignments`}>
-              <Button variant="secondary">Back</Button>
-            </Link>
-          </Col>
-        </Row>
-      </div>)}
+      ) : (
+        <div className="mb-4">
+          <Row>
+            <Col>
+              <Link to={`/Kambaz/Courses/${cid}/Assignments`}>
+                <Button variant="secondary">Back</Button>
+              </Link>
+            </Col>
+          </Row>
+        </div>
+      )}
     </Container>
   );
 }

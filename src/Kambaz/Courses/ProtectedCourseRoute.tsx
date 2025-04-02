@@ -10,19 +10,19 @@ export default function ProtectedCourseRoute({ children }: ProtectedCourseRouteP
   const { currentUser } = useSelector((state: any) => state.accountReducer);
   const { enrollments } = useSelector((state: any) => state.enrollmentReducer) || { enrollments: [] };
 
-  // Faculty can access all courses
+
   if (currentUser?.role === "FACULTY") {
     return <>{children}</>;
   }
 
-  // Check if student is enrolled in this course
+
   const isEnrolled = enrollments.some(
-    (enrollment: any) => 
-      enrollment.user === currentUser?._id && 
+    (enrollment: any) =>
+      enrollment.user === currentUser?._id &&
       enrollment.course === cid
   );
 
-  // Redirect to dashboard if not enrolled
+
   if (!isEnrolled) {
     return <Navigate to="/Kambaz/Dashboard" />;
   }
