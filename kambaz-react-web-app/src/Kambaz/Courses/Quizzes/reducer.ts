@@ -11,7 +11,7 @@ export interface QuizType {
   course: string;
 }
 
-// 定义 state 类型
+// define state
 interface QuizState {
   quizzes: QuizType[];
 }
