@@ -1,61 +1,26 @@
 import { useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { useParams } from "react-router";
-import {
-  setQuizzes,
-  deleteQuiz as deleteQuizAction,
-} from "./reducer";
+import {setQuizzes,deleteQuiz as deleteQuizAction,} from "./reducer";
 import QuizzesControls from "./QuizzesControls";
 import QuizControlButtons from "./QuizControlButtons";
 import { GoTriangleDown } from "react-icons/go";
 import { IoRocketOutline } from "react-icons/io5";
-
-// mock quiz 数据
-const mockQuizzes = [
-  {
-    _id: "1",
-    title: "Q1 - HTML",
-    points: 29,
-    dueDate: "2025-04-15T13:00:00",
-    availableFrom: "2025-04-10T09:00:00",
-    availableUntil: "2025-04-15T23:59:59",
-    course: "1234",
-    questions: 10,
-    score: 85,
-  },
-  {
-    _id: "2",
-    title: "Q2 - CSS",
-    points: 30,
-    dueDate: "2025-04-20T14:30:00",
-    availableFrom: "2025-04-01T15:00:00",
-    availableUntil: "2025-04-20T23:59:59",
-    course: "1234",
-    questions: 8,
-    score: 92,
-  },
-  {
-    _id: "3",
-    title: "Q3 - JAVA",
-    points: 30,
-    dueDate: "2023-04-20T14:30:00",
-    availableFrom: "2021-04-01T15:00:00",
-    availableUntil: "2023-04-20T23:59:59",
-    course: "1234",
-    questions: 8,
-    score: 92,
-  },
-];
+import { quizzes as mockQuizzes } from "../../Database";
 
 export default function Quizzes() {
+  console.log("🧩 Quizzes component mounted"); 
   const { currentUser } = useSelector((state: any) => state.accountReducer);
   const { cid: paramCid } = useParams();
-  const cid = paramCid || "cs5610-sp25";
+  const cid = paramCid || "RS101";
   const dispatch = useDispatch();
   const { quizzes } = useSelector((state: any) => state.quizzesReducer);
 
   useEffect(() => {
     const filtered = mockQuizzes.filter((q) => q.course === cid);
+    console.log("🟢 cid from route:", cid);
+    console.log("🟡 quizzes from JSON:", mockQuizzes);
+    console.log("🟣 Mock quizzes loaded (filtered):", filtered);
     dispatch(setQuizzes(filtered));
   }, [cid, dispatch]);
 

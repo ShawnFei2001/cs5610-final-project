@@ -28,12 +28,23 @@ export default function Kambaz() {
       console.error(error);
     }
   };
-
+  // BELOW: FOR MOCK PURPOSE ONLY
   useEffect(() => {
     if (currentUser) {
-      fetchCourses();
+      // mock course data
+      setCourses([
+        { _id: "RS101", name: "React Basics", description: "Intro to React" },
+        { _id: "JS201", name: "JavaScript Advanced", description: "Deep dive JS" }
+      ]);
     }
   }, [currentUser]);
+
+  // useEffect(() => {
+  //   if (currentUser) {
+  //     fetchCourses();
+  //   }
+  // }, [currentUser]);
+// UP: FOR MOCK PURPOSE ONLY
 
   const addNewCourse = async () => {
     if (!course.name || !course.description) {

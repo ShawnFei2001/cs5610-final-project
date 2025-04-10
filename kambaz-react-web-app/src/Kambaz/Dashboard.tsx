@@ -21,17 +21,24 @@ export default function Dashboard() {
 
   const dispatch = useDispatch();
 
-  useEffect(() => {
-    const fetchEnrollments = async () => {
-      try {
-        const serverEnrollments = await enrollmentsClient.getAllEnrollments();
-        dispatch(setEnrollments(serverEnrollments));
-      } catch (error) {
-        console.error("Failed to load enrollments:", error);
-      }
-    };
-    fetchEnrollments();
-  }, [dispatch]);
+ //FOR MOCK PURPOSE ONLY
+ useEffect(() => {
+  dispatch(setEnrollments([
+    { user: "mock-user", course: "RS101" },
+    { user: "mock-user", course: "JS201" },
+  ]));
+}, []);
+  // useEffect(() => {
+  //   const fetchEnrollments = async () => {
+  //     try {
+  //       const serverEnrollments = await enrollmentsClient.getAllEnrollments();
+  //       dispatch(setEnrollments(serverEnrollments));
+  //     } catch (error) {
+  //       console.error("Failed to load enrollments:", error);
+  //     }
+  //   };
+  //   fetchEnrollments();
+  // }, [dispatch]);
 
   const handleSetCourse = (newCourseData: any) => {
     dispatch(setCourse(newCourseData));

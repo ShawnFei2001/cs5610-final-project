@@ -1,6 +1,6 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 
-// 定义 Quiz 类型
+// Quiz Type
 export interface QuizType {
   _id?: string;
   title: string;
@@ -9,6 +9,9 @@ export interface QuizType {
   availableFrom?: string;
   availableUntil?: string;
   course: string;
+  score?: number;
+  questions?: number;
+  published?: boolean;
 }
 
 // define state
@@ -25,6 +28,7 @@ const quizzesSlice = createSlice({
   initialState,
   reducers: {
     setQuizzes: (state, action: PayloadAction<QuizType[]>) => {
+      console.log("[Redux] SET_QUIZZES called with:", action.payload);
       state.quizzes = action.payload;
     },
     addQuiz: (state, action: PayloadAction<QuizType>) => {

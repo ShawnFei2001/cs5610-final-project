@@ -7,6 +7,10 @@ import { Route, Routes, useParams, useLocation } from "react-router";
 import { FaAlignJustify } from "react-icons/fa";
 import PeopleTable from "./People/Table";
 import { useSelector } from "react-redux";
+import Quizzes from "./Quizzes";
+import QuizDetail from "./Quizzes/QuizDetail";
+import QuizEditor from "./Quizzes/Editor";
+
 
 export default function Courses() {
   const { cid } = useParams();
@@ -32,6 +36,9 @@ export default function Courses() {
             <Route path="Assignments" element={<Assignments />} />
             <Route path="Assignments/:aid" element={<AssignmentEditor />} />
             <Route path="People" element={<PeopleTable />} />
+            <Route path="Quizzes" element={<Quizzes />} />  
+            <Route path="Quizzes/:qid" element={<QuizDetail />} />
+            <Route path="Quizzes/:qid/edit" element={<QuizEditor />} />
           </Routes>
         </div>
       </div>

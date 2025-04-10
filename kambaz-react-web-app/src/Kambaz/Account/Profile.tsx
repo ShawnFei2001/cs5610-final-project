@@ -24,7 +24,9 @@ export default function Profile() {
     navigate("/Kambaz/Account/Signin");
   };
 
-  useEffect(() => { fetchProfile(); }, []);
+  useEffect(() => { 
+    fetchProfile(); }, []
+    );
   return (
     <div className="wd-profile-screen">
       <h3>Profile</h3>
