@@ -50,19 +50,19 @@ export default function QuizDetail() {
 
       <table className="table table-borderless w-auto">
         <tbody>
-          <tr><td className="fw-bold text-end">Quiz Type</td><td>Graded Quiz</td></tr>
+          <tr><td className="fw-bold text-end">Quiz Type</td><td>{quiz.quizType}</td></tr>
           <tr><td className="fw-bold text-end">Points</td><td>{quiz.points}</td></tr>
-          <tr><td className="fw-bold text-end">Assignment Group</td><td>QUIZZES</td></tr>
-          <tr><td className="fw-bold text-end">Shuffle Answers</td><td>No</td></tr>
-          <tr><td className="fw-bold text-end">Time Limit</td><td>30 Minutes</td></tr>
-          <tr><td className="fw-bold text-end">Multiple Attempts</td><td>No</td></tr>
-          <tr><td className="fw-bold text-end">View Responses</td><td>Always</td></tr>
-          <tr><td className="fw-bold text-end">Show Correct Answers</td><td>Immediately</td></tr>
-          <tr><td className="fw-bold text-end">One Question at a Time</td><td>Yes</td></tr>
-          <tr><td className="fw-bold text-end">Require Respondus LockDown Browser</td><td>No</td></tr>
-          <tr><td className="fw-bold text-end">Required to View Quiz Results</td><td>No</td></tr>
-          <tr><td className="fw-bold text-end">Webcam Required</td><td>No</td></tr>
-          <tr><td className="fw-bold text-end">Lock Questions After Answering</td><td>No</td></tr>
+          <tr><td className="fw-bold text-end">Assignment Group</td><td>{quiz.assignmentGroup}</td></tr>
+          <tr><td className="fw-bold text-end">Shuffle Answers</td><td>{quiz.shuffleAnswers ? "Yes" : "No"}</td></tr>
+          <tr><td className="fw-bold text-end">Time Limit</td><td>{quiz.hasTimeLimit ? `${quiz.timeLimit} Minutes` : "No time limit"}</td></tr>
+          <tr><td className="fw-bold text-end">Multiple Attempts</td><td>{quiz.multipleAttempts ? "Yes" : "No"}</td></tr>
+          <tr><td className="fw-bold text-end">View Responses</td><td>{quiz.viewResponse ? "Always" : "Never"}</td></tr>
+          <tr><td className="fw-bold text-end">Show Correct Answers</td><td>{quiz.showCorrectAnswers ? "Immediately" : "Do not show"}</td></tr>
+          <tr><td className="fw-bold text-end">One Question at a Time</td><td>{quiz.oneQuestionAtATime ? "Yes" : "No"}</td></tr>
+          <tr><td className="fw-bold text-end">Require Responses LockDown Browser</td><td>{quiz.requireLockdownBrowser ? "Yes" : "No"}</td></tr>
+          <tr><td className="fw-bold text-end">Required to View Quiz Results</td><td>{quiz.requiredToViewResults ? "Yes" : "No"}</td></tr>
+          <tr><td className="fw-bold text-end">Webcam Required</td><td>{quiz.webcamRequired ? "Yes" : "No"}</td></tr>
+          <tr><td className="fw-bold text-end">Lock Questions After Answering</td><td>{quiz.lockQuestionsAfterAnswering ? "Yes" : "No"}</td></tr>
         </tbody>
       </table>
 

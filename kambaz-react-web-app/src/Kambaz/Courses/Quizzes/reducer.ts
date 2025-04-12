@@ -19,8 +19,26 @@ interface QuizState {
   quizzes: QuizType[];
 }
 
+interface QuestionType {
+  _id?: string;
+  title: string;
+  points: number;
+  text: string;
+  correctAnswer?: any;
+  type: string;
+  isEditing?: boolean;
+  quiz: string; 
+  course: string;
+}
+
+interface QuizState {
+  quizzes: QuizType[];
+  questions: QuestionType[];
+}
+
 const initialState: QuizState = {
   quizzes: [],
+  questions: [],
 };
 
 const quizzesSlice = createSlice({
@@ -42,8 +60,31 @@ const quizzesSlice = createSlice({
         q._id === action.payload._id ? action.payload : q
       );
     },
+    setQuestions: (state, action: PayloadAction<QuestionType[]>) => {
+      state.questions = action.payload;
+    },
+    addQuestion: (state, action: PayloadAction<QuestionType>) => {
+      state.questions.push(action.payload);
+    },
+    updateQuestion: (state, action: PayloadAction<QuestionType>) => {
+      state.questions = state.questions.map((q) =>
+        q._id === action.payload._id ? action.payload : q
+      );
+    },
+    deleteQuestion: (state, action: PayloadAction<string>) => {
+      state.questions = state.questions.filter((q) => q._id !== action.payload);
+    },
   },
 });
 
-export const { setQuizzes, addQuiz, deleteQuiz, updateQuiz } = quizzesSlice.actions;
+export const {
+  setQuizzes,
+  addQuiz,
+  deleteQuiz,
+  updateQuiz,
+  setQuestions,
+  addQuestion,
+  updateQuestion,
+  deleteQuestion,
+} = quizzesSlice.actions;
 export default quizzesSlice.reducer;
