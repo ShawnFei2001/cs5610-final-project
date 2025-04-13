@@ -1,13 +1,13 @@
 import { Table, Button, Modal, Form } from "react-bootstrap";
 import { FaUserCircle } from "react-icons/fa";
-import { useParams } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 import * as usersClient from "./client";
 import { useSelector } from "react-redux";
+import PeopleDetails from "./Details";
 
-export default function PeopleTable() {
+export default function PeopleTable({ users = [] }: { users?: any[] }) {
   const { cid } = useParams();
-  const [users, setUsers] = useState<any[]>([]);
   const [editingUser, setEditingUser] = useState<any | null>(null);
   const [showModal, setShowModal] = useState(false);
   const [formData, setFormData] = useState({
@@ -25,7 +25,7 @@ export default function PeopleTable() {
   const loadUsers = async () => {
     if (!cid) return;
     const data = await usersClient.findUsersForCourse(cid);
-    setUsers(data);
+    // setUsers(data);
   };
 
   useEffect(() => {
@@ -41,10 +41,10 @@ export default function PeopleTable() {
   const handleSave = async () => {
     if (editingUser) {
       const updated = await usersClient.updateUser({ ...editingUser, ...formData });
-      setUsers(users.map(u => u._id === updated._id ? updated : u));
+      // setUsers(users.map(u => u._id === updated._id ? updated : u));
     } else {
       const created = await usersClient.createUser(formData);
-      setUsers([...users, created]);
+      // setUsers([...users, created]);
     }
     setShowModal(false);
     setFormData({ firstName: "", lastName: "", loginId: "", role: "STUDENT", lastActivity: "", totalActivity: 0 });
@@ -53,11 +53,12 @@ export default function PeopleTable() {
 
   const handleDelete = async (userId: string) => {
     await usersClient.deleteUser(userId);
-    setUsers(users.filter(u => u._id !== userId));
+    // setUsers(users.filter(u => u._id !== userId));
   };
 
   return (
     <div id="wd-people-table">
+      <PeopleDetails />
       {currentUser?.role === "FACULTY" && (
         <Button className="mb-3" onClick={() => setShowModal(true)}>+ Add User</Button>
       )}
@@ -77,8 +78,11 @@ export default function PeopleTable() {
           {users.map((user) => (
             <tr key={user._id}>
               <td className="text-nowrap">
-                <FaUserCircle className="me-2 fs-1 text-secondary" />
-                {user.firstName} {user.lastName}
+                <Link to={`/Kambaz/Account/Users/${user._id}`} className="text-decoration-none">
+                  <FaUserCircle className="me-2 fs-1 text-secondary" />
+                  <span className="wd-first-name">{user.firstName}</span>{" "}
+                  <span className="wd-last-name">{user.lastName}</span>
+                </Link>
               </td>
               <td>{user.loginId}</td>
               <td>{[...(userSections[user._id] || new Set()).values()].join(", ")}</td>
