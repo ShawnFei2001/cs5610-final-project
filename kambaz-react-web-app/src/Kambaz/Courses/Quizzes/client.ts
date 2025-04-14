@@ -43,7 +43,32 @@ export const deleteQuestion = async (quizId: string, questionId: string) => {
   return response.data;
 };
 
-export const findQuestions = async (quizId: string) => {
-  const response = await axios.get(`/api/quizzes/${quizId}/questions`);
-  return response.data;
+export const getLastAttempt = async (quizId: string) => {
+  const { data } = await axios.get(`${QUIZZES_API}/quizzes/${quizId}/answers`);
+  return data;
+};
+
+export const fetchQuizWithQuestions = async (quizId: string) => {
+  const { data } = await axios.get(`${QUIZZES_API}/quizzes/${quizId}`);
+  return data;
+};
+
+export const fetchSavedAnswers = async (quizId: string) => {
+  const { data } = await axios.get(`${QUIZZES_API}/quiz-attempts/${quizId}`);
+  return data;
+};
+
+export const submitQuizAnswers = async (quizId: string, answers: Record<string, any>) => {
+  const { data } = await axios.post(`${QUIZZES_API}/quiz-attempts/${quizId}/submit`, {
+    answers,
+  });
+  return data;
+};
+
+export const autosaveAnswers = async (quizId: string, answers: Record<string, any>) => {
+  const savedAt = new Date().toISOString();
+  await axios.put(`${QUIZZES_API}/quiz-attempts/${quizId}`, {
+    answers,
+    savedAt,
+  });
 };
