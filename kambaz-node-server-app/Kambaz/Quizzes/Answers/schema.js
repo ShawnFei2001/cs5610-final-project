@@ -1,13 +1,13 @@
 import mongoose from "mongoose";
 
 const answerSchema = new mongoose.Schema({
-  quizId: { type: String, required: true },
-  userId: { type: String, required: true },
+  quizId: { type: mongoose.Schema.Types.ObjectId, ref: "QuizModel", required: true },
+  userId: { type: mongoose.Schema.Types.ObjectId, ref: "UserModel", required: true },
   answers: [
     {
-      questionId: String,
+      questionId: { type: mongoose.Schema.Types.ObjectId, ref: "QuestionModel" },
       answer: mongoose.Schema.Types.Mixed,
-    },
+    }
   ],
   score: Number,
   attemptDate: { type: Date, default: Date.now },
