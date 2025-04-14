@@ -28,7 +28,11 @@ export default function QuizDetail() {
       {/* Faculty: Preview & Edit Buttons */}
       {currentUser?.role === "FACULTY" && (
         <div className="d-flex justify-content-center gap-2 mb-3">
-          <button className="btn btn-outline-secondary bg-light">Preview</button>
+          <button className="btn btn-outline-secondary bg-light" 
+          onClick={() => navigate(`/Kambaz/Courses/${cid}/Quizzes/${qid}/preview`)}
+          >
+            Preview
+          </button>
           <button
             className="btn btn-light border"
             onClick={() => navigate(`/Kambaz/Courses/${cid}/Quizzes/${qid}/edit`)}

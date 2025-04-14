@@ -10,6 +10,7 @@ import { useSelector } from "react-redux";
 import Quizzes from "./Quizzes";
 import QuizDetail from "./Quizzes/QuizDetail";
 import QuizEditor from "./Quizzes/Editor";
+import QuizPreview from "./Quizzes/QuizPreview";
 
 
 
@@ -40,6 +41,7 @@ export default function Courses() {
             <Route path="Quizzes" element={<Quizzes />} />  
             <Route path="Quizzes/:qid" element={<QuizDetail />} />
             <Route path="Quizzes/:qid/edit" element={<QuizEditor />} />
+            <Route path="Quizzes/:qid/preview" element={<QuizPreview />} />
           </Routes>
         </div>
       </div>
