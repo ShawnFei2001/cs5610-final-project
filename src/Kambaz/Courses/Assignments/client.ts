@@ -1,3 +1,4 @@
+// src/Kambaz/Courses/Assignments/client.ts
 import axios from "axios";
 const axiosWithCredentials = axios.create({ withCredentials: true });
 const REMOTE_SERVER = import.meta.env.VITE_REMOTE_SERVER_A6;
@@ -23,6 +24,7 @@ export const deleteAssignment = async (assignmentId: string) => {
     return data;
 };
 
-export function findAssignmentById(aid: string) {
-  throw new Error("Function not implemented.");
-}
+export const findAssignmentById = async (assignmentId: string) => {
+    const { data } = await axiosWithCredentials.get(`${ASSIGNMENTS_API}/assignments/${assignmentId}`);
+    return data;
+};
