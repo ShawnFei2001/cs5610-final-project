@@ -124,6 +124,197 @@ app.get("/api/debug-db", async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
+app.get("/api/debug-users-dao", async (req, res) => {
+  try {
+    console.log("Debug users DAO request received");
+    
+    // Import the model and DAO directly here for testing
+    const userModel = await import("./Kambaz/Users/model.js");
+    const userDao = await import("./Kambaz/Users/dao.js");
+    
+    // Check if model is properly exported
+    console.log("User model imported:", !!userModel.default);
+    console.log("User DAO imported:", !!userDao);
+    
+    // Try direct MongoDB query
+    const usersCollection = mongoose.connection.db.collection('users');
+    const userCount = await usersCollection.countDocuments();
+    console.log(`Direct query: users collection has ${userCount} documents`);
+    
+    // Try to find a user with direct MongoDB query
+    const directUser = await usersCollection.findOne({});
+    
+    // Try to find a user with the DAO
+    let daoUser = null;
+    let modelUser = null;
+    
+    try {
+      if (userDao.findAllUsers) {
+        const users = await userDao.findAllUsers();
+        daoUser = users && users.length > 0 ? users[0] : null;
+        console.log("DAO findAllUsers succeeded:", !!daoUser);
+      }
+    } catch (daoError) {
+      console.error("Error using DAO findAllUsers:", daoError);
+    }
+    
+    try {
+      if (userModel.default) {
+        modelUser = await userModel.default.findOne({});
+        console.log("Model findOne succeeded:", !!modelUser);
+      }
+    } catch (modelError) {
+      console.error("Error using model findOne:", modelError);
+    }
+    
+    // Send detailed debug info
+    res.json({
+      directQuery: {
+        userCount,
+        hasDirectUser: !!directUser,
+        directUserFields: directUser ? Object.keys(directUser) : null
+      },
+      daoQuery: {
+        hasDaoUser: !!daoUser,
+        daoUserFields: daoUser ? Object.keys(daoUser) : null,
+        daoFunctions: Object.keys(userDao)
+      },
+      modelQuery: {
+        hasModelUser: !!modelUser,
+        modelUserFields: modelUser ? Object.keys(modelUser) : null,
+        isMongooseModel: userModel.default instanceof mongoose.Model
+      }
+    });
+  } catch (error) {
+    console.error("Users DAO debug error:", error);
+    res.status(500).json({ 
+      error: error.message,
+      stack: error.stack
+    });
+  }
+});
+app.post("/api/debug-auth", async (req, res) => {
+  try {
+    const { username, password } = req.body;
+    console.log(`Debug auth attempt for username: ${username}`);
+    
+    if (!username || !password) {
+      return res.status(400).json({ message: "Username and password required" });
+    }
+    
+    // Try direct MongoDB query first
+    const usersCollection = mongoose.connection.db.collection('users');
+    const directUser = await usersCollection.findOne({ username });
+    console.log(`Direct query for user ${username}:`, !!directUser);
+    
+    if (directUser) {
+      console.log(`Direct query: password match:`, directUser.password === password);
+    }
+    
+    // Import the DAO
+    const userDao = await import("./Kambaz/Users/dao.js");
+    
+    // Try each step of the authentication process
+    let userByUsername = null;
+    try {
+      if (userDao.findUserByUsername) {
+        userByUsername = await userDao.findUserByUsername(username);
+        console.log(`DAO findUserByUsername result:`, !!userByUsername);
+      }
+    } catch (error) {
+      console.error(`Error in findUserByUsername:`, error);
+    }
+    
+    let userByCredentials = null;
+    try {
+      if (userDao.findUserByCredentials) {
+        userByCredentials = await userDao.findUserByCredentials(username, password);
+        console.log(`DAO findUserByCredentials result:`, !!userByCredentials);
+      }
+    } catch (error) {
+      console.error(`Error in findUserByCredentials:`, error);
+    }
+    
+    // Send detailed debug info
+    res.json({
+      directQuery: {
+        userFound: !!directUser,
+        passwordMatch: directUser ? directUser.password === password : false
+      },
+      daoQuery: {
+        findUserByUsername: !!userByUsername,
+        findUserByCredentials: !!userByCredentials,
+        error: null
+      }
+    });
+  } catch (error) {
+    console.error("Auth debug error:", error);
+    res.status(500).json({ 
+      error: error.message,
+      stack: error.stack
+    });
+  }
+});
+
+app.get("/api/debug-database", async (req, res) => {
+  try {
+    console.log("Debug database request received");
+    
+    // Check MongoDB connection status
+    const state = mongoose.connection.readyState;
+    const stateMap = {
+      0: 'disconnected',
+      1: 'connected',
+      2: 'connecting',
+      3: 'disconnecting'
+    };
+    console.log(`MongoDB connection state: ${stateMap[state]}`);
+    
+    // List all collections in the database
+    const collections = await mongoose.connection.db.listCollections().toArray();
+    const collectionNames = collections.map(c => c.name);
+    console.log("Collections in database:", collectionNames);
+    
+    // Count documents in each collection
+    const counts = {};
+    for (const name of collectionNames) {
+      counts[name] = await mongoose.connection.db.collection(name).countDocuments();
+      console.log(`Collection ${name} has ${counts[name]} documents`);
+    }
+    
+    // If users collection exists, get a sample user
+    let sampleUser = null;
+    if (collectionNames.includes('users')) {
+      sampleUser = await mongoose.connection.db.collection('users').findOne({});
+      if (sampleUser) {
+        // Don't log the entire user object in production as it contains sensitive info
+        console.log("Sample user found with username:", sampleUser.username);
+      } else {
+        console.log("No users found in the users collection");
+      }
+    }
+    
+    // Check database name
+    const dbName = mongoose.connection.db.databaseName;
+    console.log("Connected to database:", dbName);
+    
+    // Send detailed debug info
+    res.json({
+      connectionState: stateMap[state],
+      databaseName: dbName,
+      collections: collectionNames,
+      documentCounts: counts,
+      hasSampleUser: !!sampleUser,
+      sampleUserFields: sampleUser ? Object.keys(sampleUser) : null
+    });
+  } catch (error) {
+    console.error("Database debug error:", error);
+    res.status(500).json({ 
+      error: error.message,
+      stack: error.stack
+    });
+  }
+});
 
 // Routes
 console.log("Initializing routes...");
