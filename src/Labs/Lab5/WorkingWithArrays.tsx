@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import FormControl from "react-bootstrap/esm/FormControl";
 import FormCheck from "react-bootstrap/esm/FormCheck";
 
-const REMOTE_SERVER = import.meta.env.VITE_REMOTE_SERVER;
+const REMOTE_SERVER = import.meta.env.VITE_REMOTE_SERVER_A6;
 
 export default function WorkingWithArrays() {
     const [todo, setTodo] = useState({

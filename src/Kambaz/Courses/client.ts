@@ -1,5 +1,5 @@
 import axios from "axios";
-const REMOTE_SERVER = import.meta.env.VITE_REMOTE_SERVER;
+const REMOTE_SERVER = import.meta.env.VITE_REMOTE_SERVER_A6;
 const COURSES_API = `${REMOTE_SERVER}/api/courses`;
 export const createModuleForCourse = async (courseId: string, module: any) => {
     const response = await axios.post(

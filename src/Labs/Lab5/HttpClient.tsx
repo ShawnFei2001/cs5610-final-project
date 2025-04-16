@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import * as client from "./client";
 import axios from "axios";
 
-const REMOTE_SERVER = import.meta.env.VITE_REMOTE_SERVER;
+const REMOTE_SERVER = import.meta.env.VITE_REMOTE_SERVER_A6;
 
 export default function HttpClient() {
   const [welcomeOnClick, setWelcomeOnClick] = useState("");

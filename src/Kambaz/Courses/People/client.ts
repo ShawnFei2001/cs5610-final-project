@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const REMOTE_SERVER = import.meta.env.VITE_REMOTE_SERVER;
+const REMOTE_SERVER = import.meta.env.VITE_REMOTE_SERVER_A6;
 const USERS_API = `${REMOTE_SERVER}/api/users`;
 
 export const findUsersForCourse = async (courseId: string) => {

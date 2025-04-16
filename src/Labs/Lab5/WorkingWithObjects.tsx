@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import FormCheck from "react-bootstrap/esm/FormCheck";
 import FormControl from "react-bootstrap/esm/FormControl";
-const REMOTE_SERVER = import.meta.env.VITE_REMOTE_SERVER;
+const REMOTE_SERVER = import.meta.env.VITE_REMOTE_SERVER_A6;
 export default function WorkingWithObjects() {
     const [assignment, setAssignment] = useState({
         id: 1, title: "NodeJS Assignment",

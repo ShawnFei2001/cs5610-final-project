@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const REMOTE_SERVER = import.meta.env.VITE_REMOTE_SERVER;
+const REMOTE_SERVER = import.meta.env.VITE_REMOTE_SERVER_A6;
 const ASSIGNMENTS_API = `${REMOTE_SERVER}/api`;
 
 export const createAssignmentForCourse = async (courseId: string, assignment: any) => {
