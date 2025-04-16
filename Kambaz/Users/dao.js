@@ -17,6 +17,14 @@ export const findUsersByPartialName = (partialName) => {
   });
 };
 
-export const findUserByCredentials = (username, password) => model.findOne({ username, password });
-export const updateUser = (userId, user) => model.updateOne({ _id: userId }, { $set: user });
+export const findUserByCredentials = async (username, password) => {
+  try {
+    // For MongoDB
+    const user = await model.findOne({ username, password });
+    return user;
+  } catch (error) {
+    console.error("Error finding user by credentials:", error);
+    return null;
+  }
+};export const updateUser = (userId, user) => model.updateOne({ _id: userId }, { $set: user });
 export const deleteUser = (userId) => model.deleteOne({ _id: userId });

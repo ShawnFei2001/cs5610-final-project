@@ -59,27 +59,39 @@ export default function UserRoutes(app) {
 
   const signin = async (req, res) => {
     const { username, password } = req.body;
-    const currentUser = await dao.findUserByCredentials(username, password);
-    if (currentUser) {
-      req.session["currentUser"] = currentUser;
-      res.json(currentUser);
+    try {
+      const currentUser = await dao.findUserByCredentials(username, password);
+      if (currentUser) {
+        req.session.currentUser = currentUser;
+        await req.session.save(); // Make sure session is saved
+        console.log("User authenticated:", currentUser.username);
+        console.log("Session ID:", req.sessionID);
+        return res.json(currentUser);
+      } else {
+        return res.status(401).json({ message: "Invalid username or password" });
+      }
+    } catch (error) {
+      console.error("Login error:", error);
+      return res.status(500).json({ message: "Server error during login" });
+    }
+  };
+  
+  const profile = (req, res) => {
+    console.log("Profile request, session ID:", req.sessionID);
+    console.log("Session data:", req.session);
+    
+    if (req.session && req.session.currentUser) {
+      console.log("Found user in session:", req.session.currentUser.username);
+      return res.json(req.session.currentUser);
     } else {
-      res.status(401).json({ message: "Unable to login. Try again later." });
+      console.log("No user in session");
+      return res.status(401).json({ message: "Not authenticated" });
     }
   };
 
   const signout = (req, res) => {
     req.session.destroy();
     res.sendStatus(200);
-  };
-
-  const profile = (req, res) => {
-    const currentUser = req.session["currentUser"];
-    if (!currentUser) {
-      res.sendStatus(401);
-      return;
-    }
-    res.json(currentUser);
   };
 
   const findCoursesForUser = async (req, res) => {
