@@ -1,46 +1,44 @@
-// In Kambaz/Users/dao.js
+// Kambaz/Users/dao.js
+import { v4 as uuidv4 } from "uuid";
+import model from "./model.js";
+import mongoose from "mongoose";
 
-// Add debugging to your DAO functions
-export const findUserByUsername = async (username) => {
+// Make sure model is properly imported at the top
+
+export const createUser = (user) => {
+  const newUser = { ...user, _id: uuidv4() };
+  return model.create(newUser);
+};
+
+export const findAllUsers = () => model.find();
+
+export const findUserById = (userId) => model.findById(userId);
+
+export const findUserByUsername = (username) => {
   console.log(`DAO: Finding user by username: ${username}`);
-  try {
-    const user = await model.findOne({ username });
-    if (user) {
-      console.log(`DAO: User found: ${username}`);
-    } else {
-      console.log(`DAO: User not found: ${username}`);
-    }
-    return user;
-  } catch (error) {
-    console.error(`DAO Error finding user by username ${username}:`, error);
-    throw error;
-  }
+  return model.findOne({ username });
 };
 
-export const findUserByCredentials = async (username, password) => {
-  console.log(`DAO: Finding user by credentials: username=${username}`);
-  try {
-    // Check if raw MongoDB query works
-    const db = mongoose.connection.db;
-    const collection = db.collection('users');
-    
-    // Log the raw MongoDB query
-    console.log(`MongoDB raw query: db.users.findOne({username: "${username}", password: "${password}"})`);
-    
-    // Execute raw query first for debugging
-    const rawResult = await collection.findOne({ username, password });
-    console.log("Raw MongoDB result:", rawResult ? "User found" : "No user found");
-    
-    // Now use the model
-    const user = await model.findOne({ username, password });
-    if (user) {
-      console.log(`DAO: User credentials match: ${username}`);
-    } else {
-      console.log(`DAO: User credentials don't match: ${username}`);
-    }
-    return user;
-  } catch (error) {
-    console.error(`DAO Error finding user by credentials ${username}:`, error);
-    throw error;
-  }
+export const findUsersByRole = (role) => model.find({ role });
+
+export const findUsersByPartialName = (partialName) => {
+  const regex = new RegExp(partialName, "i");
+  return model.find({
+    $or: [{ firstName: { $regex: regex } }, { lastName: { $regex: regex } }],
+  });
 };
+
+export const findUserByCredentials = (username, password) => {
+  console.log(`DAO: Finding user by credentials: username=${username}`);
+  // Ensure we're using the correct model
+  if (!model) {
+    console.error("DAO Error: model is not defined in findUserByCredentials");
+    throw new Error("model is not defined");
+  }
+  
+  return model.findOne({ username, password });
+};
+
+export const updateUser = (userId, user) => model.updateOne({ _id: userId }, { $set: user });
+
+export const deleteUser = (userId) => model.deleteOne({ _id: userId });

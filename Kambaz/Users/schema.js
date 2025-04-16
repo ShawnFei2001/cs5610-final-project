@@ -1,15 +1,18 @@
+// Kambaz/Users/schema.js
 import mongoose from "mongoose";
-const userSchema = new mongoose.Schema({
+
+const userSchema = new mongoose.Schema(
+  {
     _id: String,
     username: { type: String, required: true, unique: true },
     password: { type: String, required: true },
     firstName: String,
-    email: String,
     lastName: String,
+    email: String,
     dob: Date,
     role: {
       type: String,
-      enum: ["STUDENT", "FACULTY", "ADMIN", "USER"],
+      enum: ["STUDENT", "FACULTY", "ADMIN", "USER", "TA"],
       default: "USER",
     },
     loginId: String,
@@ -19,4 +22,5 @@ const userSchema = new mongoose.Schema({
   },
   { collection: "users" }
 );
+
 export default userSchema;
