@@ -1,7 +1,34 @@
 import axios from "axios";
-const axiosWithCredentials = axios.create({ withCredentials: true });
+const axiosWithCredentials = axios.create({
+  withCredentials: true,
+  headers: {
+    "Content-Type": "application/json",
+    "Accept": "application/json"
+  }
+});
+
 export const REMOTE_SERVER = import.meta.env.VITE_REMOTE_SERVER_A6;
 export const USERS_API = `${REMOTE_SERVER}/api/users`;
+
+export const signin = async (credentials: any) => {
+  try {
+    const response = await axiosWithCredentials.post(`${USERS_API}/signin`, credentials);
+    return response.data;
+  } catch (error) {
+    console.error("Signin error:", error);
+    throw error;
+  }
+};
+
+export const profile = async () => {
+  try {
+    const response = await axiosWithCredentials.post(`${USERS_API}/profile`);
+    return response.data;
+  } catch (error) {
+    console.error("Profile fetch error:", error);
+    return null;
+  }
+};
 
 export const findCoursesForUser = async (userId: string) => {
   const response = await axiosWithCredentials.get(`${USERS_API}/${userId}/courses`);
@@ -50,11 +77,6 @@ export const deleteUser = async (userId: string) => {
   return response.data;
 };
 
-
-export const signin = async (credentials: any) => {
-    const response = await axiosWithCredentials.post(`${USERS_API}/signin`, credentials);
-    return response.data;
-};
 export const signup = async (user: any) => {
     const response = await axiosWithCredentials.post(`${USERS_API}/signup`, user);
     return response.data;
@@ -64,10 +86,6 @@ export const updateUser = async (user: any) => {
   return response.data;
 };
 
-export const profile = async () => {
-    const response = await axiosWithCredentials.post(`${USERS_API}/profile`);
-    return response.data;
-};
 export const signout = async () => {
     const response = await axiosWithCredentials.post(`${USERS_API}/signout`);
     return response.data;
