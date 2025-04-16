@@ -19,3 +19,7 @@ export const getAllEnrollments = async () => {
   const { data } = await axios.get(ENROLLMENTS_API);
   return data;
 };
+export function findCoursesForUser(_id: any) {
+  throw new Error("Function not implemented.");
+}
+

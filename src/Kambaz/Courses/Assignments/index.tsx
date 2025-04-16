@@ -1,9 +1,9 @@
+// src/Kambaz/Courses/Assignments/index.tsx
 import { useEffect, useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { useParams } from "react-router";
-import { setAssignments, addAssignment, deleteAssignment as deleteAssignmentAction} from "./reducer";
+import { setAssignments, addAssignment, deleteAssignment as deleteAssignmentAction } from "./reducer";
 import AssignmentsControls from "./AssignmentsControls";
-import AssignmentEditor from "./AssignmentEditor";
 import { IoEllipsisVertical } from "react-icons/io5";
 import { LuNotebookPen } from "react-icons/lu";
 import { BsGripVertical, BsPlus } from "react-icons/bs";
@@ -17,29 +17,50 @@ export default function Assignments() {
   const dispatch = useDispatch();
 
   const [assignmentName, setAssignmentName] = useState("");
-  const [isEditing, setIsEditing] = useState(false);
 
   useEffect(() => {
-    const fetchAssignments = async () => {
+    async function fetchAssignments() {
       if (!cid) return;
-      const serverAssignments = await assignmentsClient.findAssignmentsForCourse(cid);
-      dispatch(setAssignments(serverAssignments));
-    };
+      try {
+        const data = await assignmentsClient.findAssignmentsForCourse(cid);
+        if (Array.isArray(data)) {
+          dispatch(setAssignments(data));
+        }
+      } catch (error) {
+        console.error("Error fetching assignments:", error);
+      }
+    }
     fetchAssignments();
   }, [cid, dispatch]);
 
   const handleSaveAssignment = async (assignment: any) => {
     if (!cid) return;
-    const newAssignment = await assignmentsClient.createAssignmentForCourse(cid, assignment);
-    dispatch(addAssignment(newAssignment));
-    setAssignmentName("");
-    setIsEditing(false);
+    try {
+      await assignmentsClient.createAssignmentForCourse(cid, assignment);
+      const newAssignment = {
+        ...assignment,
+        _id: Date.now().toString(), // Temporary ID until refresh
+        course: cid,
+      };
+      dispatch(addAssignment(newAssignment));
+      setAssignmentName("");
+    } catch (error) {
+      console.error("Error creating assignment:", error);
+    }
   };
 
   const handleDeleteAssignment = async (assignmentId: string) => {
-    await assignmentsClient.deleteAssignment(assignmentId);
-    dispatch(deleteAssignmentAction(assignmentId));
+    try {
+      await assignmentsClient.deleteAssignment(assignmentId);
+      dispatch(deleteAssignmentAction(assignmentId));
+    } catch (error) {
+      console.error("Error deleting assignment:", error);
+    }
   };
+
+  const courseAssignments = assignments.filter(
+    (assignment: any) => assignment.course === cid
+  );
 
   return (
     <div className="d-flex flex-column">
@@ -51,17 +72,6 @@ export default function Assignments() {
             addAssignment={handleSaveAssignment}
           />
         </div>
-      )}
-
-      {isEditing && (
-        <AssignmentEditor
-          show={isEditing}
-          handleClose={() => setIsEditing(false)}
-          dialogTitle="Add Assignment"
-          assignmentName={assignmentName}
-          setAssignmentName={setAssignmentName}
-          addAssignment={handleSaveAssignment}
-        />
       )}
 
       <ul id="wd-assignments" className="list-group rounded-0">
@@ -79,39 +89,37 @@ export default function Assignments() {
           </div>
         </li>
 
-        {assignments
-          .filter((assignment: any) => assignment.course === cid)
-          .map((assignment: any) => (
-            <li key={assignment._id} className="wd-assignment list-group-item border-gray">
-              <div className="d-flex justify-content-between align-items-center">
-                <div className="d-flex align-items-center gap-2">
-                  <div className="d-flex flex-row align-items-center">
-                    <BsGripVertical className="fs-5 text-secondary" />
-                    <LuNotebookPen className="text-success fs-5" />
-                  </div>
-                  <div className="d-flex flex-column">
-                    <a
-                      href={`#/Kambaz/Courses/${cid}/Assignments/${assignment._id}`}
-                      className="fw-bold text-dark text-decoration-none"
-                    >
-                      {assignment.title}
-                    </a>
-                    <div className="text-muted small">
-                      <span className="text-danger">Multiple Assignments</span> |
-                      <strong> Not available until </strong> {assignment.availableFrom || "Not set"} |
-                      <strong> Due </strong> {assignment.dueDate || "Not set"} | {assignment.points} pts
-                    </div>
-                  </div>
+        {courseAssignments.map((assignment: any) => (
+          <li key={assignment._id} className="wd-assignment list-group-item border-gray">
+            <div className="d-flex justify-content-between align-items-center">
+              <div className="d-flex align-items-center gap-2">
+                <div className="d-flex flex-row align-items-center">
+                  <BsGripVertical className="fs-5 text-secondary" />
+                  <LuNotebookPen className="text-success fs-5" />
                 </div>
-                <div className="d-flex flex-row">
-                  <AssignmentControlButtons
-                    assignmentId={assignment._id}
-                    deleteAssignment={handleDeleteAssignment}
-                  />
+                <div className="d-flex flex-column">
+                  <a
+                    href={`#/Kambaz/Courses/${cid}/Assignments/${assignment._id}`}
+                    className="fw-bold text-dark text-decoration-none"
+                  >
+                    {assignment.title}
+                  </a>
+                  <div className="text-muted small">
+                    <span className="text-danger">Multiple Assignments</span> |
+                    <strong> Not available until </strong> {assignment.availableFrom || "Not set"} |
+                    <strong> Due </strong> {assignment.dueDate || "Not set"} | {assignment.points} pts
+                  </div>
                 </div>
               </div>
-            </li>
-          ))}
+              <div className="d-flex flex-row">
+                <AssignmentControlButtons
+                  assignmentId={assignment._id}
+                  deleteAssignment={handleDeleteAssignment}
+                />
+              </div>
+            </div>
+          </li>
+        ))}
       </ul>
     </div>
   );

@@ -12,12 +12,12 @@ import * as coursesClient from "../client";
 import * as modulesClient from "./client";
 
 export default function Modules() {
-
   const { currentUser } = useSelector((state: any) => state.accountReducer);
   const { cid } = useParams();
   const [moduleName, setModuleName] = useState("");
   const { modules } = useSelector((state: any) => state.modulesReducer);
   const dispatch = useDispatch();
+  
   const saveModule = async (module: any) => {
     await modulesClient.updateModule(module);
     dispatch(updateModule(module));
@@ -39,10 +39,10 @@ export default function Modules() {
     const modules = await coursesClient.findModulesForCourse(cid as string);
     dispatch(setModules(modules));
   };
+  
   useEffect(() => {
     fetchModules();
-  }, []);
-
+  }, [cid]);
 
   return (
     <div className="d-flex flex-column">

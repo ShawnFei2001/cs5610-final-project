@@ -1,13 +1,17 @@
+// src/Kambaz/Courses/People/Table.tsx
+
 import { Table, Button, Modal, Form } from "react-bootstrap";
 import { FaUserCircle } from "react-icons/fa";
 import { Link, useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 import * as usersClient from "./client";
+import * as coursesClient from "../client";
 import { useSelector } from "react-redux";
 import PeopleDetails from "./Details";
 
 export default function PeopleTable({ users = [] }: { users?: any[] }) {
   const { cid } = useParams();
+  const [courseUsers, setCourseUsers] = useState<any[]>(users);
   const [editingUser, setEditingUser] = useState<any | null>(null);
   const [showModal, setShowModal] = useState(false);
   const [formData, setFormData] = useState({
@@ -24,13 +28,21 @@ export default function PeopleTable({ users = [] }: { users?: any[] }) {
 
   const loadUsers = async () => {
     if (!cid) return;
-    const data = await usersClient.findUsersForCourse(cid);
-    // setUsers(data);
+    try {
+      const data = await coursesClient.findUsersForCourse(cid);
+      setCourseUsers(data);
+    } catch (error) {
+      console.error("Failed to load users for course:", error);
+    }
   };
 
   useEffect(() => {
-    loadUsers();
-  }, [cid]);
+    if (users.length === 0) {
+      loadUsers();
+    } else {
+      setCourseUsers(users);
+    }
+  }, [cid, users]);
 
   const userSections: Record<string, Set<string>> = {};
   enrollments.forEach((enrollment: any) => {
@@ -41,10 +53,10 @@ export default function PeopleTable({ users = [] }: { users?: any[] }) {
   const handleSave = async () => {
     if (editingUser) {
       const updated = await usersClient.updateUser({ ...editingUser, ...formData });
-      // setUsers(users.map(u => u._id === updated._id ? updated : u));
+      setCourseUsers(courseUsers.map(u => u._id === updated._id ? updated : u));
     } else {
       const created = await usersClient.createUser(formData);
-      // setUsers([...users, created]);
+      setCourseUsers([...courseUsers, created]);
     }
     setShowModal(false);
     setFormData({ firstName: "", lastName: "", loginId: "", role: "STUDENT", lastActivity: "", totalActivity: 0 });
@@ -53,7 +65,7 @@ export default function PeopleTable({ users = [] }: { users?: any[] }) {
 
   const handleDelete = async (userId: string) => {
     await usersClient.deleteUser(userId);
-    // setUsers(users.filter(u => u._id !== userId));
+    setCourseUsers(courseUsers.filter(u => u._id !== userId));
   };
 
   return (
@@ -75,7 +87,7 @@ export default function PeopleTable({ users = [] }: { users?: any[] }) {
           </tr>
         </thead>
         <tbody>
-          {users.map((user) => (
+          {courseUsers.map((user) => (
             <tr key={user._id}>
               <td className="text-nowrap">
                 <Link to={`/Kambaz/Account/Users/${user._id}`} className="text-decoration-none">
