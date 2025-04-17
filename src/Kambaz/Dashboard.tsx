@@ -21,6 +21,7 @@ export default function Dashboard({
   updateCourse,
   enrolling, 
   setEnrolling, 
+  updateEnrollment 
 }: {
   courses: any[];
   course: any;
