@@ -1,12 +1,17 @@
 import { useParams, useNavigate } from "react-router-dom";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { HiPencilAlt } from "react-icons/hi";
+import { useEffect, useState } from "react";
+import { quizzes } from "../../Database";
+import { setQuizzes } from "./reducer";
+import * as quizzesClient from "./client";
 
 export default function QuizDetail() {
   const { cid, qid } = useParams();
   const navigate = useNavigate();
   const { quizzes } = useSelector((state: any) => state.quizzesReducer);
   const { currentUser } = useSelector((state: any) => state.accountReducer);
+
 
   const quiz = quizzes.find((q: any) => q._id === qid);
 

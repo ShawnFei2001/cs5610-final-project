@@ -8,13 +8,24 @@ export const createQuizForCourse = async (courseId: string, quiz: any) => {
   return data;
 };
 
+export const findQuizById = async (quizId: string) =>{
+  const { data } = await axios.get(`${QUIZZES_API}/quizzes/${quizId}`);
+  return data;
+}
+
 export const findQuizzesForCourse = async (courseId: string) => {
-  const { data } = await axios.get(`${QUIZZES_API}/courses/${courseId}/quizzes`);
+  const { data } = await axios.get(`${QUIZZES_API}/quizzes/courses/${courseId}/quizzes`);
+  console.log("🟡 quizzes from db:", data );
   return data;
 };
 
 export const updateQuiz = async (quiz: any) => {
   const { data } = await axios.put(`${QUIZZES_API}/quizzes/${quiz._id}`, quiz);
+  return data;
+};
+
+export const addQuiz = async (quiz: any) => {
+  const { data } = await axios.post(`${QUIZZES_API}/quizzes/${quiz._id}`, quiz);
   return data;
 };
 

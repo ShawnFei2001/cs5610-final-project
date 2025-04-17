@@ -89,8 +89,10 @@ export default function QuizEditor() {
   const handleSave = () => {
     const isExistingQuiz = quizzes.some((q: any) => q._id === editedQuiz._id);
     if (isExistingQuiz) {
+      quizzesClient.updateQuiz(editedQuiz);
       dispatch(updateQuiz(editedQuiz));
     } else {
+      quizzesClient.addQuiz(editedQuiz);
       dispatch(addQuiz(editedQuiz));
     }
     navigate(`/Kambaz/Courses/${editedQuiz.course}/Quizzes/${editedQuiz._id}`);
@@ -100,8 +102,10 @@ export default function QuizEditor() {
     const quizToSave = { ...editedQuiz, published: true };
     const isExistingQuiz = quizzes.some((q: any) => q._id === editedQuiz._id);
     if (isExistingQuiz) {
+      quizzesClient.updateQuiz(editedQuiz);
       dispatch(updateQuiz(quizToSave));
     } else {
+      quizzesClient.addQuiz(editedQuiz);
       dispatch(addQuiz(quizToSave));
     }
     navigate(`/Kambaz/Courses/${editedQuiz.course}/Quizzes`);

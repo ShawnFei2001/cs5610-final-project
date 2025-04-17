@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { useParams } from "react-router";
 import {setQuizzes,deleteQuiz as deleteQuizAction,} from "./reducer";
@@ -7,21 +7,34 @@ import QuizControlButtons from "./QuizControlButtons";
 import { GoTriangleDown } from "react-icons/go";
 import { IoRocketOutline } from "react-icons/io5";
 import { quizzes as mockQuizzes } from "../../Database";
+import * as quizzesClient from "./client";
 
 export default function Quizzes() {
   console.log("🧩 Quizzes component mounted"); 
   const { currentUser } = useSelector((state: any) => state.accountReducer);
-  const { cid: paramCid } = useParams();
-  const cid = paramCid || "RS101";
+  const { cid } = useParams();
   const dispatch = useDispatch();
+
   const { quizzes } = useSelector((state: any) => state.quizzesReducer);
+  // const [quizzes, setQuizzes] = useState([]);
+ 
+
+  // useEffect(() => {
+  //   const filtered = mockQuizzes.filter((q) => q.course === cid);
+  //   console.log("🟢 cid from route:", cid);
+  //   console.log("🟡 quizzes from JSON:", mockQuizzes);
+  //   console.log("🟣 Mock quizzes loaded (filtered):", filtered);
+  //   dispatch(setQuizzes(filtered));
+  // }, [cid, dispatch]);
 
   useEffect(() => {
-    const filtered = mockQuizzes.filter((q) => q.course === cid);
-    console.log("🟢 cid from route:", cid);
-    console.log("🟡 quizzes from JSON:", mockQuizzes);
-    console.log("🟣 Mock quizzes loaded (filtered):", filtered);
-    dispatch(setQuizzes(filtered));
+    const fetchQuizzes = async () => {
+      const quizzesForCourse = await quizzesClient.findQuizzesForCourse(cid!);
+      dispatch(setQuizzes(quizzesForCourse));
+    };
+    if(cid){
+      fetchQuizzes();
+    }
   }, [cid, dispatch]);
 
   const formatDate = (dateStr: string) => {
@@ -60,7 +73,6 @@ export default function Quizzes() {
         </li>
 
         {quizzes
-          .filter((quiz: any) => quiz.course === cid)
           .map((quiz: any) => {
             const now = new Date();
             const availableFrom = new Date(quiz.availableFrom);
