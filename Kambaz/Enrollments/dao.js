@@ -1,44 +1,32 @@
-// Kambaz/Enrollments/dao.js
-import { v4 as uuidv4 } from "uuid";
 import model from "./model.js";
 
-export async function findAllEnrollments() {
-  return model.find();
-}
-
-export async function enrollUser(userId, courseId) {
-  // Check if already enrolled
-  const alreadyEnrolled = await model.findOne({ user: userId, course: courseId });
-  if (alreadyEnrolled) {
-    return null;
-  }
-  
-  // Create new enrollment
-  const enrollment = { 
-    _id: uuidv4(),
-    user: userId, 
-    course: courseId,
-    enrollmentDate: new Date(),
-    status: "ENROLLED"
-  };
-  return model.create(enrollment);
-}
-
-export async function unenrollUser(userId, courseId) {
-  const result = await model.deleteOne({ user: userId, course: courseId });
-  return result.deletedCount > 0;
-}
-
+// fetch courses for a user (populated)
 export async function findCoursesForUser(userId) {
-  const enrollments = await model.find({ user: userId }).populate("course");
-  return enrollments.map(enrollment => enrollment.course);
+  const enrolls = await model.find({ user: userId }).populate("course");
+  return enrolls.map(e => e.course);
 }
 
-export async function findUsersForCourse(courseId) {
-  const enrollments = await model.find({ course: courseId }).populate("user");
-  return enrollments.map(enrollment => enrollment.user);
+// enroll
+export function enrollUserInCourse(user, course) {
+  return model.create({ _id: `${user}-${course}`, user, course });
 }
 
-export async function deleteEnrollmentsForCourse(courseId) {
+// unenroll one
+export function unenrollUserFromCourse(user, course) {
+  return model.deleteOne({ user, course });
+}
+
+// cleanup many for a course
+export function deleteEnrollmentsForCourse(courseId) {
   return model.deleteMany({ course: courseId });
+}
+
+// cleanup many for a user (if needed)
+export function deleteEnrollmentsForUser(userId) {
+  return model.deleteMany({ user: userId });
+}
+
+// list all enrollments
+export function findAllEnrollments() {
+  return model.find();
 }

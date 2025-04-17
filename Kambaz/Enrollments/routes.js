@@ -1,45 +1,47 @@
 import * as dao from "./dao.js";
 
 export default function EnrollmentRoutes(app) {
-  // Get all enrollments
+  // List all
   app.get("/api/enrollments", async (req, res) => {
     try {
-      const enrollments = await dao.findAllEnrollments();
-      res.json(enrollments);
-    } catch (error) {
-      console.error("Error fetching enrollments:", error);
-      res.status(500).json({ message: "Error fetching enrollments", error: error.message });
+      const list = await dao.findAllEnrollments();
+      res.json(list);
+    } catch (e) {
+      console.error("Error fetching enrollments:", e);
+      res.status(500).json({ message: e.message });
     }
   });
 
-  // Enroll a user in a course
+  // Enroll
   app.post("/api/enrollments", async (req, res) => {
     try {
+      const me = req.session.currentUser;
+      if (!me) return res.status(401).json({ message: "Unauthorized" });
+
       const { userId, courseId } = req.body;
-      const result = await dao.enrollUser(userId, courseId);
-      if (result) {
-        res.json(result);
-      } else {
-        res.status(409).json({ error: "Already enrolled" });
-      }
-    } catch (error) {
-      console.error("Error enrolling user:", error);
-      res.status(500).json({ message: "Error enrolling user", error: error.message });
+      const enrollment = await dao.enrollUserInCourse(userId, courseId);
+      res.json(enrollment);
+    } catch (e) {
+      console.error("Error enrolling user:", e);
+      res.status(500).json({ message: e.message });
     }
   });
 
-  // Unenroll a user from a course
+  // Unenroll
   app.delete("/api/enrollments", async (req, res) => {
     try {
+      const me = req.session.currentUser;
+      if (!me) return res.status(401).json({ message: "Unauthorized" });
+
       const { userId, courseId } = req.body;
-      const success = await dao.unenrollUser(userId, courseId);
-      if (!success) {
-        return res.status(404).json({ error: "Enrollment not found" });
+      const result = await dao.unenrollUserFromCourse(userId, courseId);
+      if (result.deletedCount === 0) {
+        return res.status(404).json({ message: "Enrollment not found" });
       }
       res.sendStatus(200);
-    } catch (error) {
-      console.error("Error unenrolling user:", error);
-      res.status(500).json({ message: "Error unenrolling user", error: error.message });
+    } catch (e) {
+      console.error("Error unenrolling user:", e);
+      res.status(500).json({ message: e.message });
     }
   });
 }

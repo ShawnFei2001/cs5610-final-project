@@ -7,7 +7,6 @@ export async function findAllCourses() {
 }
 
 export async function findCoursesForEnrolledUser(userId) {
-  // Use the enrollment DAO function to get courses for a user
   return enrollmentsDao.findCoursesForUser(userId);
 }
 
@@ -17,9 +16,8 @@ export async function createCourse(course) {
 }
 
 export async function deleteCourse(courseId) {
-  // First delete enrollments related to this course
+  // clean up enrollments first
   await enrollmentsDao.deleteEnrollmentsForCourse(courseId);
-  // Then delete the course
   return model.deleteOne({ _id: courseId });
 }
 
