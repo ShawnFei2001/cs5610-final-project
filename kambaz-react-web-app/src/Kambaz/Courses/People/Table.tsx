@@ -3,7 +3,7 @@
 import { Table, Button, Modal, Form } from "react-bootstrap";
 import { FaUserCircle } from "react-icons/fa";
 import { Link, useParams } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import * as usersClient from "./client";
 import * as coursesClient from "../client";
 import { useSelector } from "react-redux";
@@ -18,19 +18,22 @@ export default function PeopleTable({ users = [] }: { users?: any[] }) {
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
-    username: "", // Changed from loginId to username to match backend
-    password: "password123", // Added default password
+    username: "",
+    password: "password123",
     role: "STUDENT",
     lastActivity: "",
     totalActivity: 0,
   });
+
+  // Use ref to prevent multiple fetches
+  const dataFetched = useRef(false);
 
   const currentUser = useSelector((state: any) => state.accountReducer.currentUser);
   const enrollments = useSelector((state: any) => state.enrollmentReducer.enrollments);
 
   // Load users logic
   const loadUsers = async () => {
-    if (!cid) return;
+    if (!cid || dataFetched.current) return;
     
     setLoading(true);
     try {
@@ -46,6 +49,8 @@ export default function PeopleTable({ users = [] }: { users?: any[] }) {
         console.log(`Users for course ${cid}:`, data);
         setCourseUsers(data || []);
       }
+      // Mark as fetched to prevent loops
+      dataFetched.current = true;
     } catch (error) {
       console.error("Failed to load users:", error);
       setCourseUsers([]);
@@ -55,14 +60,26 @@ export default function PeopleTable({ users = [] }: { users?: any[] }) {
   };
 
   useEffect(() => {
-    // Check if users array is empty, not checking the return of loadUsers
-    if (!users || users.length === 0) {
-      loadUsers();
-    } else {
-      setCourseUsers(users);
+    // Reset our fetch flag if the course ID changes
+    if (cid !== undefined) {
+      dataFetched.current = false;
     }
-  }, [cid, users]);
+    
+    if (users.length > 0) {
+      setCourseUsers(users);
+      dataFetched.current = true;
+    } else if (!dataFetched.current) {
+      loadUsers();
+    }
+    
+    // Cleanup function to reset the flag if component unmounts
+    return () => {
+      dataFetched.current = false;
+    };
+  }, [cid]); // Only depend on cid, not users
 
+  // Rest of your component remains the same...
+  
   // User sections mapping
   const userSections: Record<string, Set<string>> = {};
   (enrollments || []).forEach((enrollment: any) => {
@@ -105,8 +122,9 @@ export default function PeopleTable({ users = [] }: { users?: any[] }) {
       });
       setEditingUser(null);
       
-      // Refresh the list
-      loadUsers();
+      // Don't refresh the list - this causes the infinite loop
+      // loadUsers();
+      // Instead, just let the state update naturally
     } catch (error) {
       console.error("Error saving user:", error);
       alert("Error saving user. Check console for details.");
@@ -123,7 +141,6 @@ export default function PeopleTable({ users = [] }: { users?: any[] }) {
       alert("Error deleting user. Check console for details.");
     }
   };
-
   return (
     <div id="wd-people-table">
       <PeopleDetails />

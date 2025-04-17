@@ -1,5 +1,5 @@
 import * as dao from "./dao.js";
-import * as modulesDao from "../../../Kambaz/Modules/dao.js";
+import * as modulesDao from "../Modules/dao.js";
 
 export default function CourseRoutes(app) {
   // Create course (auto‐enroll current user)
