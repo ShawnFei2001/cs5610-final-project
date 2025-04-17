@@ -1,23 +1,32 @@
-import Database from "../Database/index.js";
+import model from "./model.js";
 
-export function enrollUser(userId, courseId) {
-  const already = Database.enrollments.some(e => e.user === userId && e.course === courseId);
-  if (!already) {
-    const enrollment = { user: userId, course: courseId };
-    Database.enrollments.push(enrollment);
-    return enrollment;
-  }
-  return null;
+// fetch courses for a user (populated)
+export async function findCoursesForUser(userId) {
+  const enrolls = await model.find({ user: userId }).populate("course");
+  return enrolls.map(e => e.course);
 }
 
-export function unenrollUser(userId, courseId) {
-  const before = Database.enrollments.length;
-  Database.enrollments = Database.enrollments.filter(
-    (e) => !(e.user === userId && e.course === courseId)
-  );
-  return Database.enrollments.length < before;
+// enroll
+export function enrollUserInCourse(user, course) {
+  return model.create({ _id: `${user}-${course}`, user, course });
 }
 
+// unenroll one
+export function unenrollUserFromCourse(user, course) {
+  return model.deleteOne({ user, course });
+}
+
+// cleanup many for a course
+export function deleteEnrollmentsForCourse(courseId) {
+  return model.deleteMany({ course: courseId });
+}
+
+// cleanup many for a user (if needed)
+export function deleteEnrollmentsForUser(userId) {
+  return model.deleteMany({ user: userId });
+}
+
+// list all enrollments
 export function findAllEnrollments() {
-  return Database.enrollments;
+  return model.find();
 }
