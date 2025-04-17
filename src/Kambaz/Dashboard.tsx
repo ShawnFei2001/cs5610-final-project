@@ -20,8 +20,7 @@ export default function Dashboard({
   deleteCourse, 
   updateCourse,
   enrolling, 
-  setEnrolling, 
-  updateEnrollment 
+  setEnrolling
 }: {
   courses: any[];
   course: any;
