@@ -1,25 +1,46 @@
+// src/Kambaz/Enrollments/client.ts
 import axios from "axios";
 
-const REMOTE_SERVER = import.meta.env.VITE_REMOTE_SERVER_A6;
+const REMOTE_SERVER = import.meta.env.VITE_REMOTE_SERVER_A6 || "http://localhost:4000";
 const ENROLLMENTS_API = `${REMOTE_SERVER}/api/enrollments`;
 
+// Create axios instance with credentials
+const axiosWithCredentials = axios.create({
+  baseURL: REMOTE_SERVER,
+  withCredentials: true
+});
+
 export const enrollInCourse = async (userId: string, courseId: string) => {
-  const { data } = await axios.post(ENROLLMENTS_API, { userId, courseId });
-  return data;
+  try {
+    console.log(`Enrolling user ${userId} in course ${courseId}`);
+    const { data } = await axiosWithCredentials.post('/api/enrollments', { userId, courseId });
+    return data;
+  } catch (error) {
+    console.error("Error enrolling in course:", error);
+    throw error;
+  }
 };
 
 export const unenrollFromCourse = async (userId: string, courseId: string) => {
-  const { data } = await axios.delete(ENROLLMENTS_API, {
-    data: { userId, courseId },
-  });
-  return data;
+  try {
+    console.log(`Unenrolling user ${userId} from course ${courseId}`);
+    // Use the user-specific endpoint instead of the general endpoint
+    const { data } = await axiosWithCredentials.delete(`/api/users/${userId}/courses/${courseId}`);
+    return data;
+  } catch (error) {
+    console.error("Error unenrolling from course:", error);
+    throw error;
+  }
 };
 
 export const getAllEnrollments = async () => {
-  const { data } = await axios.get(ENROLLMENTS_API);
-  return data;
+  try {
+    console.log("Getting all enrollments");
+    const { data } = await axiosWithCredentials.get('/api/enrollments');
+    console.log("Enrollments data:", data);
+    return Array.isArray(data) ? data : [];
+  } catch (error) {
+    console.error("Error getting all enrollments:", error);
+    return [];
+  }
 };
-export function findCoursesForUser(_id: any) {
-  throw new Error("Function not implemented.");
-}
-

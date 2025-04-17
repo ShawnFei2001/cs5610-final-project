@@ -1,7 +1,7 @@
 import { Row, Col, Card, Button, FormControl } from "react-bootstrap";
 import { Link } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
-import { setCourse, addCourse, deleteCourse, updateCourse } from "./Courses/reducer";
+import { setCourse, addCourse, deleteCourse, updateCourse, setCourses } from "./Courses/reducer";
 import {
   toggleShowAllCourses,
   enroll,
@@ -9,7 +9,8 @@ import {
   setEnrollments
 } from "./Enrollments/reducer";
 import * as enrollmentsClient from "./Enrollments/client";
-import { useEffect } from "react";
+import * as userClient from "./Account/client"
+import { useEffect, useState, useRef } from "react";
 
 export default function Dashboard({ 
   courses, 
@@ -35,57 +36,109 @@ export default function Dashboard({
   const { currentUser } = useSelector((state: any) => state.accountReducer);
   const enrollmentState = useSelector((state: any) => state.enrollmentReducer);
   const { enrollments, showAllCourses } = enrollmentState || { enrollments: [], showAllCourses: false };
+  
+  // Debug state
+  const [debugInfo, setDebugInfo] = useState({
+    coursesCount: 0,
+    enrollmentsCount: 0,
+    userRole: ''
+  });
+
+  // Use ref to track if enrollments have been fetched
+  const enrollmentsFetched = useRef(false);
 
   const dispatch = useDispatch();
 
   useEffect(() => {
-    const fetchEnrollments = async () => {
-      try {
-        const serverEnrollments = await enrollmentsClient.getAllEnrollments();
-        dispatch(setEnrollments(serverEnrollments));
-      } catch (error) {
-        console.error("Failed to load enrollments:", error);
-      }
-    };
-    fetchEnrollments();
+    console.log("Dashboard - Current User:", currentUser);
+    console.log("Dashboard - Courses:", courses);
+    console.log("Dashboard - Enrollments:", enrollments);
+    
+    setDebugInfo({
+      coursesCount: Array.isArray(courses) ? courses.length : 0,
+      enrollmentsCount: Array.isArray(enrollments) ? enrollments.length : 0,
+      userRole: currentUser?.role || 'None'
+    });
+    
+    // Only fetch enrollments once
+    if (!enrollmentsFetched.current) {
+      const fetchEnrollments = async () => {
+        try {
+          console.log("Fetching enrollments...");
+          const serverEnrollments = await enrollmentsClient.getAllEnrollments();
+          console.log("Enrollments fetched:", serverEnrollments);
+          dispatch(setEnrollments(serverEnrollments));
+          enrollmentsFetched.current = true;
+        } catch (error) {
+          console.error("Failed to load enrollments:", error);
+        }
+      };
+      fetchEnrollments();
+    }
   }, [dispatch]);
 
   const handleSetCourse = (newCourseData: any) => {
+    console.log("Setting course data:", newCourseData);
     setCourse(newCourseData);
   };
 
   const handleToggleShowAllCourses = () => {
+    console.log("Toggling show all courses from", showAllCourses, "to", !showAllCourses);
     dispatch(toggleShowAllCourses());
+    console.log("Toggling enrolling from", enrolling, "to", !enrolling);
     setEnrolling(!enrolling);
   };
 
   const handleEnroll = async (courseId: string) => {
     if (currentUser) {
       try {
-        await enrollmentsClient.enrollInCourse(currentUser._id, courseId);
+        console.log("Enrolling user", currentUser._id, "in course", courseId);
+        await userClient.enrollIntoCourse(currentUser._id, courseId);
         dispatch(enroll({ userId: currentUser._id, courseId }));
-        updateEnrollment(courseId, true);
+        
+        // Update UI optimistically, but provide a fallback if the API call fails
+        const updatedCourses = courses.map(c => 
+          c._id === courseId ? { ...c, enrolled: true } : c
+        );
+        setCourses(updatedCourses);
       } catch (error) {
         console.error("Failed to enroll:", error);
+        // Show an error message to the user
+        alert("Failed to enroll in course. Please try again.");
       }
     }
   };
-
+  
   const handleUnenroll = async (courseId: string) => {
     if (currentUser) {
       try {
-        await enrollmentsClient.unenrollFromCourse(currentUser._id, courseId);
+        console.log("Unenrolling user", currentUser._id, "from course", courseId);
+        await userClient.unenrollFromCourse(currentUser._id, courseId);
         dispatch(unenroll({ userId: currentUser._id, courseId }));
-        updateEnrollment(courseId, false);
+        
+        // Update UI optimistically, but provide a fallback if the API call fails
+        const updatedCourses = courses.map(c => 
+          c._id === courseId ? { ...c, enrolled: false } : c
+        );
+        setCourses(updatedCourses);
       } catch (error) {
         console.error("Failed to unenroll:", error);
+        // Show an error message to the user
+        alert("Failed to unenroll from course. Please try again.");
       }
     }
   };
-
   const isEnrolled = (courseId: string) => {
+    // First check if the course has an enrolled flag
     const course = courses.find(c => c._id === courseId);
-    return course?.enrolled === true;
+    if (course && 'enrolled' in course) {
+      return course.enrolled === true;
+    }
+    
+    // Fallback to checking enrollments
+    return Array.isArray(enrollments) && enrollments.some(
+      e => e.user === currentUser?._id && e.course === courseId
+    );
   };
 
   const handleCourseNavigation = (event: React.MouseEvent, courseId: string) => {
@@ -118,12 +171,12 @@ export default function Dashboard({
           </h5>
           <br />
           <FormControl
-            value={course.name}
+            value={course.name || ''}
             className="mb-2"
             onChange={(e) => handleSetCourse({ ...course, name: e.target.value })}
           />
           <FormControl
-            value={course.description}
+            value={course.description || ''}
             as="textarea"
             rows={3}
             onChange={(e) => handleSetCourse({ ...course, description: e.target.value })}
@@ -135,14 +188,23 @@ export default function Dashboard({
       <h2 id="wd-dashboard-published">
         {currentUser?.role === "STUDENT" && !showAllCourses
           ? "My Enrollments"
-          : "Published Courses"} ({courses.length})
+          : "Published Courses"} ({Array.isArray(courses) ? courses.length : 0})
       </h2>
       <hr />
 
+      {/* Display message if no courses */}
+      {(!Array.isArray(courses) || courses.length === 0) && (
+        <div className="alert alert-info">
+          {currentUser?.role === "FACULTY" 
+            ? "No courses available. Create a new course using the form above."
+            : "No courses available. Try changing to 'All Courses' mode or contact your administrator."}
+        </div>
+      )}
+
       <div id="wd-dashboard-courses">
         <Row xs={1} md={5} className="g-4">
-          {courses.map((course: any) => (
-            <Col key={course._id} className="wd-dashboard-course" style={{ width: "300px" }}>
+          {Array.isArray(courses) && courses.map((course: any, index: number) => (
+            <Col key={course._id || `course-${index}`} className="wd-dashboard-course" style={{ width: "300px" }}>
               <Card>
                 <Link
                   to={`/Kambaz/Courses/${course._id}/Home`}
