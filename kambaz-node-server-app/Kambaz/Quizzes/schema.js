@@ -1,6 +1,7 @@
 import mongoose from "mongoose";
 
 const schema = new mongoose.Schema({
+  _id: { type: String, required: true},
   title: { type: String, required: true, default: "Unnamed Quiz" },
   description: { type: String, default: "" },
   quizType: {
@@ -26,7 +27,7 @@ const schema = new mongoose.Schema({
   availableDate: { type: Date },
   untilDate: { type: Date },
   published: { type: Boolean, default: false },
-  course: { type: mongoose.Schema.Types.ObjectId, ref: "CourseModel" },
+  course: { type: String},
   createdBy: { type: mongoose.Schema.Types.ObjectId, ref: "UserModel" },
 }, { collection: "quizzes", timestamps: true });
 
