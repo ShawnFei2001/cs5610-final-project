@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
-
+import "./styles.css";
 import Session from "./Account/Session";
 import Account from "./Account";
 import Dashboard from "./Dashboard";
@@ -30,7 +30,9 @@ export default function Kambaz() {
       const courses = await userClient.findCoursesForUser(currentUser._id);
       console.log("Found courses:", courses);
       setCourses(courses.map((c: any) => ({ ...c, enrolled: true })));
-      dispatch(setReduxCourses(courses.map((c: any) => ({ ...c, enrolled: true }))));
+      dispatch(
+        setReduxCourses(courses.map((c: any) => ({ ...c, enrolled: true })))
+      );
     } catch (error) {
       console.error(error);
     }
@@ -67,7 +69,9 @@ export default function Kambaz() {
     if (!currentUser) return;
 
     try {
-      console.log(`${enrolled ? 'Enrolling in' : 'Unenrolling from'} course ${courseId}`);
+      console.log(
+        `${enrolled ? "Enrolling in" : "Unenrolling from"} course ${courseId}`
+      );
 
       if (enrolled) {
         await userClient.enrollIntoCourse(currentUser._id, courseId);
@@ -81,7 +85,6 @@ export default function Kambaz() {
       );
 
       setCourses(updatedCourses);
-
     } catch (error) {
       console.error("Error updating enrollment:", error);
       // Optional: Revert UI changes if the API call failed
@@ -91,7 +94,10 @@ export default function Kambaz() {
 
   useEffect(() => {
     if (currentUser) {
-      console.log("Current user detected, loading courses. Enrolling mode:", enrolling);
+      console.log(
+        "Current user detected, loading courses. Enrolling mode:",
+        enrolling
+      );
       if (enrolling) {
         fetchCourses();
       } else {
@@ -150,7 +156,7 @@ export default function Kambaz() {
           style={{
             flex: 1,
             overflowY: "auto",
-            marginLeft: "120px",
+            // marginLeft: "120px",
           }}
         >
           <Routes>

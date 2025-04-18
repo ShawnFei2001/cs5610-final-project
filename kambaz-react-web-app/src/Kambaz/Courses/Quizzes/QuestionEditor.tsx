@@ -215,7 +215,7 @@ export default function QuestionEditor({ question, onChange, onCancel, onSave }:
           <TinyMCEEditor
             tinymceScriptSrc="/tinymce/tinymce.min.js"
             value={question.text}
-            onEditorChange={(content) => handleInputChange("text", content)}
+            onEditorChange={(content:any) => handleInputChange("text", content)}
             init={{
               height: 200,
               menubar: "edit view insert format tools table",
@@ -227,7 +227,7 @@ export default function QuestionEditor({ question, onChange, onCancel, onSave }:
                 "body { font-family:Helvetica,Arial,sans-serif; font-size:14px }",
               branding: false,
               statusbar: false,
-              setup: (editor) => {
+              setup: (editor:any) => {
                 editor.on("init", () => {
                   editor.execCommand("FontSize", false, "12pt");
                 });
@@ -382,7 +382,7 @@ export default function QuestionEditor({ question, onChange, onCancel, onSave }:
           <TinyMCEEditor
             tinymceScriptSrc="/tinymce/tinymce.min.js"
             value={question.text}
-            onEditorChange={(content) => handleInputChange("text", content)}
+            onEditorChange={(content:any) => handleInputChange("text", content)}
             init={{
               height: 200,
               menubar: "edit view insert format tools table",
@@ -394,7 +394,7 @@ export default function QuestionEditor({ question, onChange, onCancel, onSave }:
                 "body { font-family:Helvetica,Arial,sans-serif; font-size:14px }",
               branding: false,
               statusbar: false,
-              setup: (editor) => {
+              setup: (editor:any) => {
                 editor.on("init", () => {
                   editor.execCommand("FontSize", false, "12pt");
                 });
@@ -614,7 +614,7 @@ export default function QuestionEditor({ question, onChange, onCancel, onSave }:
           <TinyMCEEditor
             tinymceScriptSrc="/tinymce/tinymce.min.js"
             value={question.text}
-            onEditorChange={(content) => handleInputChange("text", content)}
+            onEditorChange={(content:any) => handleInputChange("text", content)}
             init={{
               height: 150,
               menubar: false,

@@ -341,7 +341,7 @@ export default function QuizEditor() {
               <Form.Label>Quiz Instructions:</Form.Label>
               <Editor
                 tinymceScriptSrc="/tinymce/tinymce.min.js"
-                onInit={(evt, editor) => editorRef.current = editor}
+                onInit={(evt:any, editor:any) => editorRef.current = editor}
                 initialValue={editedQuiz.description}
                 init={{
                   base_url: "/tinymce",
@@ -358,7 +358,7 @@ export default function QuizEditor() {
                   content_style:
                     "body { font-family:Helvetica,Arial,sans-serif; font-size:14px }",
                 }}
-                onEditorChange={(content) =>
+                onEditorChange={(content:any) =>
                   setEditedQuiz({ ...editedQuiz, description: content })
                 }
               />
