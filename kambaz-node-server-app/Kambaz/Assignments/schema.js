@@ -1,3 +1,4 @@
+// Kambaz/Assignments/schema.js
 import mongoose from "mongoose";
 const assignmentSchema = new mongoose.Schema(
   {

@@ -77,8 +77,6 @@ export default function PeopleTable({ users = [] }: { users?: any[] }) {
       dataFetched.current = false;
     };
   }, [cid]); // Only depend on cid, not users
-
-  // Rest of your component remains the same...
   
   // User sections mapping
   const userSections: Record<string, Set<string>> = {};

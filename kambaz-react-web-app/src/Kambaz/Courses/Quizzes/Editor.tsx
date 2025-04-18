@@ -12,7 +12,6 @@ import {
   Card,
   InputGroup,
 } from "react-bootstrap";
-import ReactQuill from "react-quill";
 import "react-quill/dist/quill.snow.css";
 import { updateQuiz, addQuiz } from "./reducer";
 import * as quizzesClient from "./client";
@@ -21,8 +20,8 @@ import { GoX } from "react-icons/go";
 import { FaBan } from "react-icons/fa";
 import { HiDotsVertical } from "react-icons/hi";
 import QuestionEditor from "./QuestionEditor";
-import { addQuestion, updateQuestion, deleteQuestion } from "./reducer";
-import { questions as mockQuestions } from "../../Database";
+import { addQuestion, updateQuestion, deleteQuestion, setQuestions } from "./reducer";
+import { v4 as uuidv4 } from "uuid";
 
 interface QuizType {
   _id: string;
@@ -33,7 +32,6 @@ interface QuizType {
   availableFrom?: string;
   availableUntil?: string;
   course: string;
-  // published?: boolean;
   quizType: string;
   assignmentGroup: string;
   shuffleAnswers: boolean;
@@ -54,21 +52,27 @@ export default function QuizEditor() {
   const { qid, cid } = useParams();
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  const { quizzes } = useSelector((state: any) => state.quizzesReducer);
+  
+  // Safely access Redux state with fallbacks
+  const quizzesState = useSelector((state: any) => state.quizzesReducer);
+  const quizzes = quizzesState?.quizzes || [];
+  const questionsFromState = quizzesState?.questions || [];
+  
   const existingQuiz = quizzes.find((q: any) => q._id === qid);
   const editorRef = useRef<any>(null);
 
   const [key, setKey] = useState("details");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [editedQuiz, setEditedQuiz] = useState<QuizType>({
-    _id: existingQuiz?._id || qid || "",
-    title: existingQuiz?.title || "",
+    _id: existingQuiz?._id || qid || uuidv4(),
+    title: existingQuiz?.title || "New Quiz",
     description: existingQuiz?.description || "",
     points: existingQuiz?.points || 10,
     dueDate: existingQuiz?.dueDate || "",
     availableFrom: existingQuiz?.availableFrom || "",
     availableUntil: existingQuiz?.availableUntil || "",
     course: existingQuiz?.course || cid || "",
-    // published: existingQuiz?.published || false,
     quizType: existingQuiz?.quizType || "Graded Quiz",
     assignmentGroup: existingQuiz?.assignmentGroup || "Quizzes",
     shuffleAnswers: existingQuiz?.shuffleAnswers ?? true,
@@ -86,47 +90,113 @@ export default function QuizEditor() {
     requiredToViewResults: existingQuiz?.requiredToViewResults ?? false,
   });
 
-  const handleSave = () => {
-    const isExistingQuiz = quizzes.some((q: any) => q._id === editedQuiz._id);
-    if (isExistingQuiz) {
-      quizzesClient.updateQuiz(editedQuiz);
-      dispatch(updateQuiz(editedQuiz));
-    } else {
-      quizzesClient.addQuiz(editedQuiz);
-      dispatch(addQuiz(editedQuiz));
-    }
-    navigate(`/Kambaz/Courses/${editedQuiz.course}/Quizzes/${editedQuiz._id}`);
-  };
-
-  const handleSaveAndPublish = () => {
-    const quizToSave = { ...editedQuiz, published: true };
-    const isExistingQuiz = quizzes.some((q: any) => q._id === editedQuiz._id);
-    if (isExistingQuiz) {
-      quizzesClient.updateQuiz(editedQuiz);
-      dispatch(updateQuiz(quizToSave));
-    } else {
-      quizzesClient.addQuiz(editedQuiz);
-      dispatch(addQuiz(quizToSave));
-    }
-    navigate(`/Kambaz/Courses/${editedQuiz.course}/Quizzes`);
-  };
-
-  const [questions, setQuestions] = useState<any[]>(() => {
-    if (!existingQuiz?._id) return [];
-    return mockQuestions.filter((q) => q.quiz === existingQuiz._id);
-  });
-
+  // Use local state for questions
+  const [questions, setQuestionsLocal] = useState<any[]>([]);
   const [newQuestion, setNewQuestion] = useState<any | null>(null);
+  
+  // Fetch quiz details and questions if editing an existing quiz
+  useEffect(() => {
+    const fetchQuizData = async () => {
+      if (!qid) return;
+      
+      setLoading(true);
+      setError(null);
+      
+      try {
+        // Fetch quiz details
+        const quizData = await quizzesClient.findQuizById(qid);
+        console.log("Fetched quiz data:", quizData);
+        
+        if (quizData) {
+          setEditedQuiz({
+            ...editedQuiz,
+            ...quizData,
+          });
+        }
+        
+        // Fetch questions for this quiz
+        const questionsData = await quizzesClient.getQuestions(qid);
+        console.log("Fetched questions:", questionsData);
+        
+        if (Array.isArray(questionsData)) {
+          setQuestionsLocal(questionsData);
+          dispatch(setQuestions(questionsData));
+        }
+      } catch (err) {
+        console.error("Error fetching quiz data:", err);
+        setError("Failed to load quiz. Please try again.");
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchQuizData();
+  }, [qid, dispatch]);
+
+  const handleSave = async () => {
+    try {
+      setLoading(true);
+      
+      const isExistingQuiz = quizzes.some((q: any) => q._id === editedQuiz._id);
+      let savedQuiz;
+      
+      if (isExistingQuiz) {
+        console.log("Updating existing quiz:", editedQuiz);
+        savedQuiz = await quizzesClient.updateQuiz(editedQuiz);
+        dispatch(updateQuiz(savedQuiz));
+      } else {
+        console.log("Creating new quiz:", editedQuiz);
+        savedQuiz = await quizzesClient.createQuizForCourse(cid as string, editedQuiz);
+        dispatch(addQuiz(savedQuiz));
+      }
+      
+      navigate(`/Kambaz/Courses/${editedQuiz.course}/Quizzes`);
+    } catch (err) {
+      console.error("Error saving quiz:", err);
+      setError("Failed to save quiz. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSaveAndPublish = async () => {
+    try {
+      setLoading(true);
+      
+      const quizToSave = { ...editedQuiz, published: true };
+      let savedQuiz;
+      
+      const isExistingQuiz = quizzes.some((q: any) => q._id === editedQuiz._id);
+      if (isExistingQuiz) {
+        console.log("Updating and publishing existing quiz:", quizToSave);
+        savedQuiz = await quizzesClient.updateQuiz(quizToSave);
+        dispatch(updateQuiz(savedQuiz));
+      } else {
+        console.log("Creating and publishing new quiz:", quizToSave);
+        savedQuiz = await quizzesClient.createQuizForCourse(cid as string, quizToSave);
+        dispatch(addQuiz(savedQuiz));
+      }
+      
+      navigate(`/Kambaz/Courses/${editedQuiz.course}/Quizzes`);
+    } catch (err) {
+      console.error("Error saving and publishing quiz:", err);
+      setError("Failed to publish quiz. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleAddQuestion = () => {
     setNewQuestion({
-      _id: Date.now().toString(),
+      _id: uuidv4(),
       title: "",
       points: 1,
       text: "",
       correctAnswer: true,
       isEditing: true,
       type: "Multiple Choice",
+      quiz: editedQuiz._id,
+      course: cid
     });
   };
 
@@ -134,36 +204,49 @@ export default function QuizEditor() {
     const updatedQuestions = questions.map((q) =>
       q._id === questionId ? updatedQuestion : q
     );
-    setQuestions(updatedQuestions);
+    setQuestionsLocal(updatedQuestions);
   };
 
-  const handleCancelQuestion = (index: number) => {
-    const updatedQuestions = [...questions];
-    updatedQuestions[index].isEditing = false;
-    setQuestions(updatedQuestions);
+  const handleCancelQuestion = (questionId: string) => {
+    const updatedQuestions = questions.map((q) =>
+      q._id === questionId ? { ...q, isEditing: false } : q
+    );
+    setQuestionsLocal(updatedQuestions);
   };
 
   const handleSaveQuestion = async (question: any) => {
     try {
-      let savedQuestion = question;
-      if (!question._id) {
-        savedQuestion = {
+      let savedQuestion:any;
+      
+      if (!questions.some(q => q._id === question._id)) {
+        // New question
+        console.log("Creating new question:", question);
+        savedQuestion = await quizzesClient.createQuestion(editedQuiz._id, {
           ...question,
-          _id: Date.now().toString(),
-        };
+          quiz: editedQuiz._id,
+          course: cid
+        });
         dispatch(addQuestion(savedQuestion));
+        
+        // Update local state
+        setQuestionsLocal([...questions, { ...savedQuestion, isEditing: false }]);
       } else {
+        // Existing question
+        console.log("Updating existing question:", question);
+        savedQuestion = await quizzesClient.updateQuestion(editedQuiz._id, question);
         dispatch(updateQuestion(savedQuestion));
+        
+        // Update local state
+        const updatedQuestions = questions.map((q) =>
+          q._id === savedQuestion._id ? { ...savedQuestion, isEditing: false } : q
+        );
+        setQuestionsLocal(updatedQuestions);
       }
 
-      const updatedQuestions = questions.map((q) =>
-        q._id === savedQuestion._id ? { ...savedQuestion, isEditing: false } : q
-      );
-      setQuestions(updatedQuestions);
-
-      console.log("Question saved locally ✅", savedQuestion);
+      console.log("Question saved:", savedQuestion);
     } catch (error) {
       console.error("Failed to save question", error);
+      setError("Failed to save question. Please try again.");
     }
   };
 
@@ -171,13 +254,38 @@ export default function QuizEditor() {
     const updatedQuestions = questions.map((q) =>
       q._id === questionId ? { ...q, isEditing: true } : q
     );
-    setQuestions(updatedQuestions);
+    setQuestionsLocal(updatedQuestions);
   };
 
-  const handleDeleteQuestion = (questionId: string) => {
-    const updatedQuestions = questions.filter((q) => q._id !== questionId);
-    setQuestions(updatedQuestions);
+  const handleDeleteQuestion = async (questionId: string) => {
+    try {
+      console.log("Deleting question:", questionId);
+      await quizzesClient.deleteQuestion(editedQuiz._id, questionId);
+      dispatch(deleteQuestion(questionId));
+      
+      // Update local state
+      const updatedQuestions = questions.filter((q) => q._id !== questionId);
+      setQuestionsLocal(updatedQuestions);
+    } catch (error) {
+      console.error("Failed to delete question", error);
+      setError("Failed to delete question. Please try again.");
+    }
   };
+
+  if (loading) {
+    return <div className="text-center p-4">Loading quiz editor...</div>;
+  }
+
+  if (error) {
+    return (
+      <div className="alert alert-danger">
+        {error}
+        <Button className="ms-3" onClick={() => navigate(`/Kambaz/Courses/${cid}/Quizzes`)}>
+          Return to Quizzes
+        </Button>
+      </div>
+    );
+  }
 
   return (
     <div className="quiz-editor mt-4">
@@ -233,6 +341,8 @@ export default function QuizEditor() {
               <Form.Label>Quiz Instructions:</Form.Label>
               <Editor
                 tinymceScriptSrc="/tinymce/tinymce.min.js"
+                onInit={(evt, editor) => editorRef.current = editor}
+                initialValue={editedQuiz.description}
                 init={{
                   base_url: "/tinymce",
                   height: 300,
@@ -527,11 +637,11 @@ export default function QuizEditor() {
               <button
                 type="button"
                 className="btn btn-danger"
-                onClick={() => handleSave()}
+                onClick={handleSave}
               >
                 Save
               </button>
-              <Button variant="primary" onClick={() => handleSaveAndPublish()}>
+              <Button variant="primary" onClick={handleSaveAndPublish}>
                 Save and Publish
               </Button>
             </div>
@@ -545,41 +655,48 @@ export default function QuizEditor() {
           </Form>
         </Tab>
 
-        {/* Questions tab placeholder */}
+        {/* Questions tab */}
         <Tab eventKey="questions" title="Questions">
           <div className="p-3">
             {/* Questions List UI */}
             <div className="mb-3">
-              <ul className="list-group">
-                {questions.map((question) => (
-                  <li
-                    key={question._id}
-                    className="list-group-item d-flex justify-content-between align-items-center"
-                  >
-                    <div>
-                      <strong>{question.title || "Untitled Question"}</strong> -{" "}
-                      {question.points} pts
-                    </div>
-                    <div className="d-flex gap-2">
-                      <Button
-                        variant="outline-primary"
-                        size="sm"
-                        onClick={() => handleEditQuestion(question._id)}
-                      >
-                        Edit
-                      </Button>
-                      <Button
-                        variant="outline-danger"
-                        size="sm"
-                        onClick={() => handleDeleteQuestion(question._id)}
-                      >
-                        Delete
-                      </Button>
-                    </div>
-                  </li>
-                ))}
-              </ul>
+              {questions.length === 0 ? (
+                <div className="alert alert-info">
+                  No questions added yet. Click the "New Question" button to add your first question.
+                </div>
+              ) : (
+                <ul className="list-group">
+                  {questions.map((question) => (
+                    <li
+                      key={question._id}
+                      className="list-group-item d-flex justify-content-between align-items-center"
+                    >
+                      <div>
+                        <strong>{question.title || "Untitled Question"}</strong> -{" "}
+                        {question.points} pts
+                      </div>
+                      <div className="d-flex gap-2">
+                        <Button
+                          variant="outline-primary"
+                          size="sm"
+                          onClick={() => handleEditQuestion(question._id)}
+                        >
+                          Edit
+                        </Button>
+                        <Button
+                          variant="outline-danger"
+                          size="sm"
+                          onClick={() => handleDeleteQuestion(question._id)}
+                        >
+                          Delete
+                        </Button>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              )}
             </div>
+            
             {/* Add new question button */}
             <div className="d-flex justify-content-between align-items-center mb-3">
               <Button
@@ -597,6 +714,8 @@ export default function QuizEditor() {
                 + New Question
               </Button>
             </div>
+            
+            {/* New question editor */}
             {newQuestion && (
               <QuestionEditor
                 question={newQuestion}
@@ -604,16 +723,11 @@ export default function QuizEditor() {
                   setNewQuestion(updatedQuestion)
                 }
                 onCancel={() => setNewQuestion(null)}
-                onSave={(updatedQuestion: any) => {
-                  setQuestions([
-                    ...questions,
-                    { ...updatedQuestion, isEditing: false },
-                  ]);
-                  setNewQuestion(null);
-                }}
+                onSave={handleSaveQuestion}
               />
             )}
 
+            {/* Existing question editors */}
             {questions.map(
               (question) =>
                 question.isEditing && (
@@ -624,9 +738,7 @@ export default function QuizEditor() {
                       handleQuestionChange(question._id, updatedQuestion)
                     }
                     onCancel={() => handleCancelQuestion(question._id)}
-                    onSave={(updatedQuestion: any) =>
-                      handleSaveQuestion(updatedQuestion)
-                    }
+                    onSave={handleSaveQuestion}
                   />
                 )
             )}

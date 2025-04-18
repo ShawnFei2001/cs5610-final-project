@@ -1,7 +1,8 @@
+// Kambaz/Quizzes/schema.js
 import mongoose from "mongoose";
 
 const schema = new mongoose.Schema({
-  _id: { type: String, required: true},
+  _id: { type: String, required: true },
   title: { type: String, required: true, default: "Unnamed Quiz" },
   description: { type: String, default: "" },
   quizType: {
@@ -12,7 +13,7 @@ const schema = new mongoose.Schema({
   points: { type: Number, default: 0 },
   assignmentGroup: {
     type: String,
-    enum: ["Quizzes", "Exams", "Assignments", "Project"],
+    enum: ["Quizzes", "Exams", "Assignments", "Project", "QUIZZES", "ASSIGNMENTS"],
     default: "Quizzes",
   },
   shuffleAnswers: { type: Boolean, default: true },
@@ -23,12 +24,16 @@ const schema = new mongoose.Schema({
   oneQuestionAtATime: { type: Boolean, default: true },
   webcamRequired: { type: Boolean, default: false },
   lockQuestionsAfterAnswering: { type: Boolean, default: false },
+  hasTimeLimit: { type: Boolean, default: true },
+  viewResponse: { type: Boolean, default: false },
+  requireLockdownBrowser: { type: Boolean, default: false },
+  requiredToViewResults: { type: Boolean, default: false },
   dueDate: { type: Date },
-  availableDate: { type: Date },
-  untilDate: { type: Date },
+  availableFrom: { type: Date },
+  availableUntil: { type: Date },
   published: { type: Boolean, default: false },
-  course: { type: String},
-  createdBy: { type: mongoose.Schema.Types.ObjectId, ref: "UserModel" },
+  course: { type: String, required: true },
+  createdBy: { type: String, ref: "UserModel" },
 }, { collection: "quizzes", timestamps: true });
 
 export default schema;

@@ -1,9 +1,11 @@
+// src/Kambaz/Courses/Quizzes/reducer.ts
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 
 // Quiz Type
 export interface QuizType {
   _id?: string;
   title: string;
+  description?: string;
   points: number;
   dueDate?: string;
   availableFrom?: string;
@@ -12,14 +14,24 @@ export interface QuizType {
   score?: number;
   questions?: number;
   published?: boolean;
+  quizType?: string;
+  assignmentGroup?: string;
+  shuffleAnswers?: boolean;
+  timeLimit?: number;
+  multipleAttempts?: boolean;
+  showCorrectAnswers?: boolean;
+  accessCode?: string;
+  hasTimeLimit?: boolean;
+  oneQuestionAtATime?: boolean;
+  webcamRequired?: boolean;
+  lockQuestionsAfterAnswering?: boolean;
+  viewResponse?: boolean;
+  requireLockdownBrowser?: boolean;
+  requiredToViewResults?: boolean;
 }
 
-// define state
-interface QuizState {
-  quizzes: QuizType[];
-}
-
-interface QuestionType {
+// Question Type
+export interface QuestionType {
   _id?: string;
   title: string;
   points: number;
@@ -31,6 +43,7 @@ interface QuestionType {
   course: string;
 }
 
+// State interface
 interface QuizState {
   quizzes: QuizType[];
   questions: QuestionType[];
@@ -47,7 +60,7 @@ const quizzesSlice = createSlice({
   reducers: {
     setQuizzes: (state, action: PayloadAction<QuizType[]>) => {
       console.log("[Redux] SET_QUIZZES called with:", action.payload);
-      state.quizzes = action.payload;
+      state.quizzes = action.payload || [];
     },
     addQuiz: (state, action: PayloadAction<QuizType>) => {
       state.quizzes.push(action.payload);
@@ -61,7 +74,7 @@ const quizzesSlice = createSlice({
       );
     },
     setQuestions: (state, action: PayloadAction<QuestionType[]>) => {
-      state.questions = action.payload;
+      state.questions = action.payload || [];
     },
     addQuestion: (state, action: PayloadAction<QuestionType>) => {
       state.questions.push(action.payload);

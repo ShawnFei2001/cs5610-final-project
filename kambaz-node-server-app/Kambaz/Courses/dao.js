@@ -1,3 +1,4 @@
+// Kambaz/Courses/dao.js
 import { v4 as uuidv4 } from "uuid";
 import model from "./model.js";
 import * as enrollmentsDao from "../Enrollments/dao.js";
@@ -16,7 +17,6 @@ export async function createCourse(course) {
 }
 
 export async function deleteCourse(courseId) {
-  // clean up enrollments first
   await enrollmentsDao.deleteEnrollmentsForCourse(courseId);
   return model.deleteOne({ _id: courseId });
 }

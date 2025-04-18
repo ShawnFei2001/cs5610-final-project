@@ -1,3 +1,4 @@
+// Kambaz/Modules/Questions/schema.js
 import mongoose from "mongoose";
 
 const questionSchema = new mongoose.Schema({

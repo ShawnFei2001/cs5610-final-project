@@ -1,51 +1,106 @@
+// src/Kambaz/Courses/Quizzes/QuizzesControls.tsx
 import { FaPlus } from "react-icons/fa6";
-import { Button, FormControl, Dropdown } from "react-bootstrap";
+import { Button, Form, FormControl, Modal } from "react-bootstrap";
 import { IoEllipsisVertical } from "react-icons/io5";
-import { useNavigate, useParams } from "react-router-dom";
-import { useSelector, useDispatch } from "react-redux";
 import { useState } from "react";
-import { deleteQuiz } from "./reducer";
-import { FaBan } from "react-icons/fa6";
-import { FaCheckCircle } from "react-icons/fa";
-import QuizMenu from "./QuizMenu";
+import { useParams, useNavigate } from "react-router-dom";
+import { useDispatch } from "react-redux";
+import { addQuiz } from "./reducer";
+import * as quizzesClient from "./client";
+import { v4 as uuidv4 } from "uuid";
 
-
-
-export default function QuizzesControls() {
-  const { currentUser } = useSelector((state: any) => state.accountReducer);
-  const { quizzes } = useSelector((state: any) => state.quizzesReducer);
-  const dispatch = useDispatch();
-  const navigate = useNavigate();
+export default function QuizzesControls({ 
+  quizName, 
+  setQuizName, 
+  addQuiz 
+}: { 
+  quizName: string; 
+  setQuizName: (title: string) => void; 
+  addQuiz: (quiz: any) => void; 
+}) {
   const { cid } = useParams();
-  const [isPublished, setIsPublished] = useState(false);
+  const navigate = useNavigate();
+  
+  const [show, setShow] = useState(false);
+  const handleClose = () => setShow(false);
+  const handleShow = () => setShow(true);
 
-  const handleCreateAndNavigate = () => {
-    const newQuizId = Date.now().toString();
-    navigate(`/Kambaz/Courses/${cid}/Quizzes/${newQuizId}/edit`);
+  const handleAddQuiz = () => {
+    const newQuiz = {
+      _id: uuidv4(),
+      title: quizName || "New Quiz",
+      description: "",
+      points: 100,
+      dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+      availableFrom: new Date().toISOString(),
+      availableUntil: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
+      course: cid,
+      questions: 0,
+      published: false
+    };
+    
+    addQuiz(newQuiz);
+    setShow(false);
   };
 
-
   return (
-    <div className="d-flex align-items-center justify-content-between">
-      <FormControl className="w-50 me-3" placeholder="Search for Quiz" />
+    <div id="wd-quizzes-controls" className="d-flex align-items-center justify-content-between">
+      <div className="flex-grow-1 me-3">
+        <FormControl 
+          className="w-100 border-secondary" 
+          placeholder="Search for Quiz" 
+        />
+      </div>
 
-      {currentUser?.role === "FACULTY" && (
-        <div className="d-flex gap-2">
-          {/* + Quiz */}
-          <Button
-            variant="danger"
-            size="sm"
-            onClick={handleCreateAndNavigate}
-            className="d-flex align-items-center px-2 py-1"
-          >
-            <FaPlus className="me-2 fs-6" />
-            Quiz
+      <div className="d-flex align-items-center gap-2">
+        <Button variant="secondary" size="lg">
+          <FaPlus className="me-2" />
+          Group
+        </Button>
+        <Button variant="danger" size="lg" onClick={handleShow}>
+          <FaPlus className="me-2" />
+          Quiz
+        </Button>
+        <Button variant="secondary" size="lg">
+          <IoEllipsisVertical className="fs-4" />
+        </Button>
+      </div>
+      
+      {/* Modal for creating a new quiz */}
+      <Modal show={show} onHide={handleClose} centered>
+        <Modal.Header closeButton>
+          <Modal.Title>Add Quiz</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <Form>
+            <Form.Group className="mb-3">
+              <Form.Label>Title</Form.Label>
+              <FormControl
+                value={quizName}
+                onChange={(e) => setQuizName(e.target.value)}
+                placeholder="Quiz Title"
+              />
+            </Form.Group>
+            
+            <Form.Group className="mb-3">
+              <Form.Label>Points</Form.Label>
+              <FormControl
+                type="number"
+                defaultValue={100}
+                min={0}
+              />
+            </Form.Group>
+          </Form>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={handleClose}>
+            Cancel
           </Button>
-
-          {/* Dropdown 3-dot menu */}
-          <QuizMenu />
-        </div>
-      )}
+          <Button onClick={handleAddQuiz}>
+            Add Quiz
+          </Button>
+        </Modal.Footer>
+      </Modal>
     </div>
   );
 }
