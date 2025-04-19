@@ -1,5 +1,6 @@
 // Kambaz/Quizzes/routes.js
 import * as quizzesDao from "./dao.js";
+import * as questionsDao from "./Questions/dao.js";
 
 export default function QuizRoutes(app) {
   // List quizzes for a course

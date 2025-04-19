@@ -12,7 +12,7 @@ import {
   Card,
   InputGroup,
 } from "react-bootstrap";
-import "react-quill/dist/quill.snow.css";
+// import "react-quill/dist/quill.snow.css";
 import { updateQuiz, addQuiz } from "./reducer";
 import * as quizzesClient from "./client";
 import { Editor } from "@tinymce/tinymce-react";
@@ -32,6 +32,7 @@ interface QuizType {
   availableFrom?: string;
   availableUntil?: string;
   course: string;
+  published?: boolean;
   quizType: string;
   assignmentGroup: string;
   shuffleAnswers: boolean;
@@ -73,6 +74,7 @@ export default function QuizEditor() {
     availableFrom: existingQuiz?.availableFrom || "",
     availableUntil: existingQuiz?.availableUntil || "",
     course: existingQuiz?.course || cid || "",
+    published: existingQuiz?.published || false,
     quizType: existingQuiz?.quizType || "Graded Quiz",
     assignmentGroup: existingQuiz?.assignmentGroup || "Quizzes",
     shuffleAnswers: existingQuiz?.shuffleAnswers ?? true,
@@ -150,7 +152,7 @@ export default function QuizEditor() {
         dispatch(addQuiz(savedQuiz));
       }
       
-      navigate(`/Kambaz/Courses/${editedQuiz.course}/Quizzes`);
+      navigate(`/Kambaz/Courses/${editedQuiz.course}/Quizzes/${editedQuiz._id}`);
     } catch (err) {
       console.error("Error saving quiz:", err);
       setError("Failed to save quiz. Please try again.");
@@ -230,6 +232,7 @@ export default function QuizEditor() {
         
         // Update local state
         setQuestionsLocal([...questions, { ...savedQuestion, isEditing: false }]);
+        setNewQuestion(null);
       } else {
         // Existing question
         console.log("Updating existing question:", question);

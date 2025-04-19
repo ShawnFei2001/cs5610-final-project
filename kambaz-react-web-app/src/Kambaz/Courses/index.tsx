@@ -8,6 +8,9 @@ import { Route, Routes, useParams, useLocation } from "react-router";
 import { FaAlignJustify } from "react-icons/fa";
 import PeopleTable from "./People/Table";
 import { useSelector } from "react-redux";
+import QuizDetail from "./Quizzes/QuizDetail";
+import QuizEditor from "./Quizzes/Editor";
+import QuizPreview from "./Quizzes/QuizPreview";
 
 export default function Courses() {
   const { cid } = useParams();
@@ -20,8 +23,9 @@ export default function Courses() {
     <div id="wd-courses">
       <h2 className="text-danger">
         <FaAlignJustify className="me-4 fs-4 mb-1" />
-        {course && course.name}  &gt; {pathname.split("/")[4]}
-      </h2> <hr />
+        {course && course.name} &gt; {pathname.split("/")[4]}
+      </h2>{" "}
+      <hr />
       <div className="d-flex">
         <div className="d-none d-md-block">
           <CourseNavigation />
@@ -33,6 +37,9 @@ export default function Courses() {
             <Route path="Assignments" element={<Assignments />} />
             <Route path="Assignments/:aid" element={<AssignmentEditor />} />
             <Route path="Quizzes" element={<Quizzes />} />
+            <Route path="Quizzes/:qid" element={<QuizDetail />} />
+            <Route path="Quizzes/:qid/edit" element={<QuizEditor />} />
+            <Route path="Quizzes/:qid/preview" element={<QuizPreview />} />
             <Route path="People" element={<PeopleTable />} />
           </Routes>
         </div>
