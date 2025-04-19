@@ -178,7 +178,11 @@ export default function QuizDetail() {
           <tr><td className="fw-bold text-end">Assignment Group</td><td>{quiz.assignmentGroup || "Quizzes"}</td></tr>
           <tr><td className="fw-bold text-end">Shuffle Answers</td><td>{quiz.shuffleAnswers ? "Yes" : "No"}</td></tr>
           <tr><td className="fw-bold text-end">Time Limit</td><td>{quiz.hasTimeLimit ? `${quiz.timeLimit} Minutes` : "No time limit"}</td></tr>
+          <tr><td className="fw-bold text-end">Access Code</td><td>{quiz.accessCode ? quiz.accessCode : "None"}</td></tr>         
           <tr><td className="fw-bold text-end">Multiple Attempts</td><td>{quiz.multipleAttempts ? "Yes" : "No"}</td></tr>
+          <tr><td className="fw-bold text-end">Attempts</td>
+  <td>{quiz.multipleAttempts ? (quiz.maxAttempts || 1) : 1}</td>
+</tr>
           <tr><td className="fw-bold text-end">View Responses</td><td>{quiz.viewResponse ? "Always" : "Never"}</td></tr>
           <tr><td className="fw-bold text-end">Show Correct Answers</td><td>{quiz.showCorrectAnswers ? "Immediately" : "Do not show"}</td></tr>
           <tr><td className="fw-bold text-end">One Question at a Time</td><td>{quiz.oneQuestionAtATime ? "Yes" : "No"}</td></tr>

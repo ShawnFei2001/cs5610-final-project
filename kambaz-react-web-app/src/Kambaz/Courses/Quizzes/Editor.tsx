@@ -20,7 +20,12 @@ import { GoX } from "react-icons/go";
 import { FaBan } from "react-icons/fa";
 import { HiDotsVertical } from "react-icons/hi";
 import QuestionEditor from "./QuestionEditor";
-import { addQuestion, updateQuestion, deleteQuestion, setQuestions } from "./reducer";
+import {
+  addQuestion,
+  updateQuestion,
+  deleteQuestion,
+  setQuestions,
+} from "./reducer";
 import { v4 as uuidv4 } from "uuid";
 
 interface QuizType {
@@ -28,6 +33,7 @@ interface QuizType {
   title: string;
   description: string;
   points: number;
+
   dueDate?: string;
   availableFrom?: string;
   availableUntil?: string;
@@ -38,6 +44,7 @@ interface QuizType {
   shuffleAnswers: boolean;
   timeLimit: number;
   multipleAttempts: boolean;
+  maxAttempts: number;
   showCorrectAnswers: boolean;
   accessCode?: string;
   hasTimeLimit: boolean;
@@ -53,12 +60,12 @@ export default function QuizEditor() {
   const { qid, cid } = useParams();
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  
+
   // Safely access Redux state with fallbacks
   const quizzesState = useSelector((state: any) => state.quizzesReducer);
   const quizzes = quizzesState?.quizzes || [];
   const questionsFromState = quizzesState?.questions || [];
-  
+
   const existingQuiz = quizzes.find((q: any) => q._id === qid);
   const editorRef = useRef<any>(null);
 
@@ -70,6 +77,7 @@ export default function QuizEditor() {
     title: existingQuiz?.title || "New Quiz",
     description: existingQuiz?.description || "",
     points: existingQuiz?.points || 10,
+
     dueDate: existingQuiz?.dueDate || "",
     availableFrom: existingQuiz?.availableFrom || "",
     availableUntil: existingQuiz?.availableUntil || "",
@@ -80,6 +88,7 @@ export default function QuizEditor() {
     shuffleAnswers: existingQuiz?.shuffleAnswers ?? true,
     timeLimit: existingQuiz?.timeLimit || 20,
     multipleAttempts: existingQuiz?.multipleAttempts ?? false,
+    maxAttempts: existingQuiz?.maxAttempts ?? 1,
     showCorrectAnswers: existingQuiz?.showCorrectAnswers ?? true,
     accessCode: existingQuiz?.accessCode || "",
     hasTimeLimit: existingQuiz?.hasTimeLimit ?? true,
@@ -95,31 +104,34 @@ export default function QuizEditor() {
   // Use local state for questions
   const [questions, setQuestionsLocal] = useState<any[]>([]);
   const [newQuestion, setNewQuestion] = useState<any | null>(null);
-  
+  const [originalQuestionsMap, setOriginalQuestionsMap] = useState<
+    Record<string, any>
+  >({});
+
   // Fetch quiz details and questions if editing an existing quiz
   useEffect(() => {
     const fetchQuizData = async () => {
       if (!qid) return;
-      
+
       setLoading(true);
       setError(null);
-      
+
       try {
         // Fetch quiz details
         const quizData = await quizzesClient.findQuizById(qid);
         console.log("Fetched quiz data:", quizData);
-        
+
         if (quizData) {
           setEditedQuiz({
             ...editedQuiz,
             ...quizData,
           });
         }
-        
+
         // Fetch questions for this quiz
         const questionsData = await quizzesClient.getQuestions(qid);
         console.log("Fetched questions:", questionsData);
-        
+
         if (Array.isArray(questionsData)) {
           setQuestionsLocal(questionsData);
           dispatch(setQuestions(questionsData));
@@ -131,28 +143,33 @@ export default function QuizEditor() {
         setLoading(false);
       }
     };
-    
+
     fetchQuizData();
   }, [qid, dispatch]);
 
   const handleSave = async () => {
     try {
       setLoading(true);
-      
+
       const isExistingQuiz = quizzes.some((q: any) => q._id === editedQuiz._id);
       let savedQuiz;
-      
+
       if (isExistingQuiz) {
         console.log("Updating existing quiz:", editedQuiz);
         savedQuiz = await quizzesClient.updateQuiz(editedQuiz);
         dispatch(updateQuiz(savedQuiz));
       } else {
         console.log("Creating new quiz:", editedQuiz);
-        savedQuiz = await quizzesClient.createQuizForCourse(cid as string, editedQuiz);
+        savedQuiz = await quizzesClient.createQuizForCourse(
+          cid as string,
+          editedQuiz
+        );
         dispatch(addQuiz(savedQuiz));
       }
-      
-      navigate(`/Kambaz/Courses/${editedQuiz.course}/Quizzes/${editedQuiz._id}`);
+
+      navigate(
+        `/Kambaz/Courses/${editedQuiz.course}/Quizzes/${editedQuiz._id}`
+      );
     } catch (err) {
       console.error("Error saving quiz:", err);
       setError("Failed to save quiz. Please try again.");
@@ -164,10 +181,10 @@ export default function QuizEditor() {
   const handleSaveAndPublish = async () => {
     try {
       setLoading(true);
-      
+
       const quizToSave = { ...editedQuiz, published: true };
       let savedQuiz;
-      
+
       const isExistingQuiz = quizzes.some((q: any) => q._id === editedQuiz._id);
       if (isExistingQuiz) {
         console.log("Updating and publishing existing quiz:", quizToSave);
@@ -175,10 +192,13 @@ export default function QuizEditor() {
         dispatch(updateQuiz(savedQuiz));
       } else {
         console.log("Creating and publishing new quiz:", quizToSave);
-        savedQuiz = await quizzesClient.createQuizForCourse(cid as string, quizToSave);
+        savedQuiz = await quizzesClient.createQuizForCourse(
+          cid as string,
+          quizToSave
+        );
         dispatch(addQuiz(savedQuiz));
       }
-      
+
       navigate(`/Kambaz/Courses/${editedQuiz.course}/Quizzes`);
     } catch (err) {
       console.error("Error saving and publishing quiz:", err);
@@ -198,7 +218,7 @@ export default function QuizEditor() {
       isEditing: true,
       type: "Multiple Choice",
       quiz: editedQuiz._id,
-      course: cid
+      course: cid,
     });
   };
 
@@ -209,39 +229,56 @@ export default function QuizEditor() {
     setQuestionsLocal(updatedQuestions);
   };
 
+  // const handleCancelQuestion = (questionId: string) => {
+  //   const updatedQuestions = questions.map((q) =>
+  //     q._id === questionId ? { ...q, isEditing: false } : q
+  //   );
+  //   setQuestionsLocal(updatedQuestions);
+  // };
   const handleCancelQuestion = (questionId: string) => {
+    const original = originalQuestionsMap[questionId];
+
     const updatedQuestions = questions.map((q) =>
-      q._id === questionId ? { ...q, isEditing: false } : q
+      q._id === questionId && original ? { ...original, isEditing: false } : q
     );
+
     setQuestionsLocal(updatedQuestions);
   };
 
   const handleSaveQuestion = async (question: any) => {
     try {
-      let savedQuestion:any;
-      
-      if (!questions.some(q => q._id === question._id)) {
+      let savedQuestion: any;
+
+      if (!questions.some((q) => q._id === question._id)) {
         // New question
         console.log("Creating new question:", question);
         savedQuestion = await quizzesClient.createQuestion(editedQuiz._id, {
           ...question,
           quiz: editedQuiz._id,
-          course: cid
+          course: cid,
         });
         dispatch(addQuestion(savedQuestion));
-        
+
         // Update local state
-        setQuestionsLocal([...questions, { ...savedQuestion, isEditing: false }]);
+        setQuestionsLocal([
+          ...questions,
+          { ...savedQuestion, isEditing: false },
+        ]);
         setNewQuestion(null);
       } else {
         // Existing question
         console.log("Updating existing question:", question);
-        savedQuestion = await quizzesClient.updateQuestion(editedQuiz._id, question);
+        savedQuestion = await quizzesClient.updateQuestion(
+          editedQuiz._id,
+          question
+        );
         dispatch(updateQuestion(savedQuestion));
-        
+
         // Update local state
         const updatedQuestions = questions.map((q) =>
-          q._id === savedQuestion._id ? { ...savedQuestion, isEditing: false } : q
+          q._id === savedQuestion._id
+            ? { ...savedQuestion, isEditing: false }
+            : q
         );
         setQuestionsLocal(updatedQuestions);
       }
@@ -253,7 +290,21 @@ export default function QuizEditor() {
     }
   };
 
+  // const handleEditQuestion = (questionId: string) => {
+  //   const updatedQuestions = questions.map((q) =>
+  //     q._id === questionId ? { ...q, isEditing: true } : q
+  //   );
+  //   setQuestionsLocal(updatedQuestions);
+  // };
   const handleEditQuestion = (questionId: string) => {
+    const original = questions.find((q) => q._id === questionId);
+    if (original) {
+      setOriginalQuestionsMap((prev) => ({
+        ...prev,
+        [questionId]: { ...original },
+      }));
+    }
+
     const updatedQuestions = questions.map((q) =>
       q._id === questionId ? { ...q, isEditing: true } : q
     );
@@ -265,7 +316,7 @@ export default function QuizEditor() {
       console.log("Deleting question:", questionId);
       await quizzesClient.deleteQuestion(editedQuiz._id, questionId);
       dispatch(deleteQuestion(questionId));
-      
+
       // Update local state
       const updatedQuestions = questions.filter((q) => q._id !== questionId);
       setQuestionsLocal(updatedQuestions);
@@ -283,7 +334,10 @@ export default function QuizEditor() {
     return (
       <div className="alert alert-danger">
         {error}
-        <Button className="ms-3" onClick={() => navigate(`/Kambaz/Courses/${cid}/Quizzes`)}>
+        <Button
+          className="ms-3"
+          onClick={() => navigate(`/Kambaz/Courses/${cid}/Quizzes`)}
+        >
           Return to Quizzes
         </Button>
       </div>
@@ -296,7 +350,13 @@ export default function QuizEditor() {
         className="d-flex justify-content-end align-items-center mb-3"
         style={{ gap: "16px" }}
       >
-        <div>Points {editedQuiz.points}</div>
+        {/* <div>Points {editedQuiz.points}</div> */}
+        <div>
+          Points{" "}
+          {key === "questions"
+            ? questions.reduce((sum, q) => sum + (q.points || 0), 0)
+            : editedQuiz.points}
+        </div>
         <div
           className="text-muted d-flex align-items-center"
           style={{ gap: "4px" }}
@@ -344,7 +404,7 @@ export default function QuizEditor() {
               <Form.Label>Quiz Instructions:</Form.Label>
               <Editor
                 tinymceScriptSrc="/tinymce/tinymce.min.js"
-                onInit={(evt:any, editor:any) => editorRef.current = editor}
+                onInit={(evt: any, editor: any) => (editorRef.current = editor)}
                 initialValue={editedQuiz.description}
                 init={{
                   base_url: "/tinymce",
@@ -361,10 +421,48 @@ export default function QuizEditor() {
                   content_style:
                     "body { font-family:Helvetica,Arial,sans-serif; font-size:14px }",
                 }}
-                onEditorChange={(content:any) =>
+                onEditorChange={(content: any) =>
                   setEditedQuiz({ ...editedQuiz, description: content })
                 }
               />
+            </Form.Group>
+
+            {/* Points */}
+            <Form.Group as={Row} className="mb-3 align-items-center">
+              <Form.Label column sm={3} className="text-end">
+                Total Points
+              </Form.Label>
+              <Col sm={9}>
+                <Form.Control
+                  type="number"
+                  min={0}
+                  value={editedQuiz.points}
+                  onChange={(e) =>
+                    setEditedQuiz({
+                      ...editedQuiz,
+                      points: parseInt(e.target.value),
+                    })
+                  }
+                />
+              </Col>
+            </Form.Group>
+            {/* Access Code */}
+            <Form.Group as={Row} className="mb-3 align-items-center">
+              <Form.Label column sm={3} className="text-end">
+                Access Code
+              </Form.Label>
+              <Col sm={9}>
+                <Form.Control
+                  type="text"
+                  value={editedQuiz.accessCode}
+                  onChange={(e) =>
+                    setEditedQuiz({
+                      ...editedQuiz,
+                      accessCode: e.target.value,
+                    })
+                  }
+                />
+              </Col>
             </Form.Group>
 
             {/* Quiz Type */}
@@ -380,7 +478,9 @@ export default function QuizEditor() {
                   }
                 >
                   <option>Graded Quiz</option>
-                  <option>Ungraded Quiz</option>
+                  <option>Practice Quiz</option>
+                  <option>Graded Survey</option>
+                  <option>Ungraded Survey</option>
                 </Form.Select>
               </Col>
             </Form.Group>
@@ -402,8 +502,10 @@ export default function QuizEditor() {
                       })
                     }
                   >
-                    <option>QUIZZES</option>
-                    <option>ASSIGNMENTS</option>
+                    <option>Quizzes</option>
+                    <option>Exams</option>
+                    <option>Assignments</option>
+                    <option>Project</option>
                   </Form.Select>
                 </Form.Group>
                 {/* Options */}
@@ -478,6 +580,18 @@ export default function QuizEditor() {
                         })
                       }
                     />
+                    {/* Webcam Required */}
+                    <Form.Check
+                      label="Webcam Required"
+                      className="mt-2"
+                      checked={editedQuiz.webcamRequired}
+                      onChange={(e) =>
+                        setEditedQuiz({
+                          ...editedQuiz,
+                          webcamRequired: e.target.checked,
+                        })
+                      }
+                    />
                     <Form.Check
                       label="Required to View Quiz Results"
                       className="mt-2"
@@ -486,6 +600,17 @@ export default function QuizEditor() {
                         setEditedQuiz({
                           ...editedQuiz,
                           requiredToViewResults: e.target.checked,
+                        })
+                      }
+                    />
+                    <Form.Check
+                      type="checkbox"
+                      label="Show Correct Answers"
+                      checked={editedQuiz.showCorrectAnswers}
+                      onChange={(e) =>
+                        setEditedQuiz({
+                          ...editedQuiz,
+                          showCorrectAnswers: e.target.checked,
                         })
                       }
                     />
@@ -520,7 +645,7 @@ export default function QuizEditor() {
                       Minutes
                     </div>
                     <div className="border rounded p-2 mt-2">
-                      <Form.Check
+                      {/* <Form.Check
                         label="Allow Multiple Attempts"
                         checked={editedQuiz.multipleAttempts}
                         onChange={(e) =>
@@ -529,7 +654,40 @@ export default function QuizEditor() {
                             multipleAttempts: e.target.checked,
                           })
                         }
-                      />
+                      /> */}
+                      <div className="border rounded p-2 mt-2">
+                        <Form.Check
+                          label="Allow Multiple Attempts"
+                          checked={editedQuiz.multipleAttempts}
+                          onChange={(e) =>
+                            setEditedQuiz((prev) => ({
+                              ...prev,
+                              multipleAttempts: e.target.checked,
+                              maxAttempts: e.target.checked
+                                ? prev.maxAttempts || 1
+                                : 1, // 默认设为1
+                            }))
+                          }
+                        />
+
+                        {editedQuiz.multipleAttempts && (
+                          <div className="d-flex align-items-center mt-2 ps-4">
+                            <span className="me-2">Max Attempts:</span>
+                            <Form.Control
+                              type="number"
+                              min={1}
+                              style={{ width: "100px" }}
+                              value={editedQuiz.maxAttempts}
+                              onChange={(e) =>
+                                setEditedQuiz({
+                                  ...editedQuiz,
+                                  maxAttempts: Number(e.target.value),
+                                })
+                              }
+                            />
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </Form.Group>
                 </Form.Group>
@@ -631,7 +789,9 @@ export default function QuizEditor() {
               <Button
                 variant="secondary"
                 onClick={() => {
-                  navigate(`/Kambaz/Courses/${editedQuiz.course}/Quizzes`);
+                  navigate(
+                    `/Kambaz/Courses/${editedQuiz.course}/Quizzes/${editedQuiz._id}`
+                  );
                 }}
               >
                 Cancel
@@ -665,7 +825,8 @@ export default function QuizEditor() {
             <div className="mb-3">
               {questions.length === 0 ? (
                 <div className="alert alert-info">
-                  No questions added yet. Click the "New Question" button to add your first question.
+                  No questions added yet. Click the "New Question" button to add
+                  your first question.
                 </div>
               ) : (
                 <ul className="list-group">
@@ -675,8 +836,8 @@ export default function QuizEditor() {
                       className="list-group-item d-flex justify-content-between align-items-center"
                     >
                       <div>
-                        <strong>{question.title || "Untitled Question"}</strong> -{" "}
-                        {question.points} pts
+                        <strong>{question.title || "Untitled Question"}</strong>{" "}
+                        - {question.points} pts
                       </div>
                       <div className="d-flex gap-2">
                         <Button
@@ -699,7 +860,7 @@ export default function QuizEditor() {
                 </ul>
               )}
             </div>
-            
+
             {/* Add new question button */}
             <div className="d-flex justify-content-between align-items-center mb-3">
               <Button
@@ -717,7 +878,7 @@ export default function QuizEditor() {
                 + New Question
               </Button>
             </div>
-            
+
             {/* New question editor */}
             {newQuestion && (
               <QuestionEditor
