@@ -2,7 +2,17 @@ import { useEffect, useRef, useState } from "react";
 import { Dropdown } from "react-bootstrap";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import {Tabs,Tab,Form,Button,FormControl,Col,Row,Card,InputGroup,} from "react-bootstrap";
+import {
+  Tabs,
+  Tab,
+  Form,
+  Button,
+  FormControl,
+  Col,
+  Row,
+  Card,
+  InputGroup,
+} from "react-bootstrap";
 // import "react-quill/dist/quill.snow.css";
 import { updateQuiz, addQuiz } from "./reducer";
 import * as quizzesClient from "./client";
@@ -11,7 +21,12 @@ import { GoX } from "react-icons/go";
 import { FaBan } from "react-icons/fa";
 import { HiDotsVertical } from "react-icons/hi";
 import QuestionEditor from "./QuestionEditor";
-import {addQuestion,updateQuestion,deleteQuestion,setQuestions} from "./reducer";
+import {
+  addQuestion,
+  updateQuestion,
+  deleteQuestion,
+  setQuestions,
+} from "./reducer";
 import { v4 as uuidv4 } from "uuid";
 
 interface QuizType {
@@ -94,6 +109,10 @@ export default function QuizEditor() {
     Record<string, any>
   >({});
 
+  const formatDateForInput = (iso: string) => {
+    return new Date(iso).toISOString().slice(0, 16);
+  };
+
   // Fetch quiz details and questions if editing an existing quiz
   useEffect(() => {
     const fetchQuizData = async () => {
@@ -107,10 +126,23 @@ export default function QuizEditor() {
         const quizData = await quizzesClient.findQuizById(qid);
         console.log("Fetched quiz data:", quizData);
 
+        // if (quizData) {
+        //   setEditedQuiz({
+        //     ...editedQuiz,
+        //     ...quizData,
+        //   });
+        // }
         if (quizData) {
           setEditedQuiz({
             ...editedQuiz,
             ...quizData,
+            dueDate: quizData.dueDate ? formatDateForInput(quizData.dueDate) : "",
+            availableFrom: quizData.availableFrom
+              ? formatDateForInput(quizData.availableFrom)
+              : "",
+            availableUntil: quizData.availableUntil
+              ? formatDateForInput(quizData.availableUntil)
+              : "",
           });
         }
 
@@ -133,28 +165,65 @@ export default function QuizEditor() {
     fetchQuizData();
   }, [qid, dispatch]);
 
+  // const handleSave = async () => {
+  //   try {
+  //     setLoading(true);
+
+  //     const isExistingQuiz = quizzes.some((q: any) => q._id === editedQuiz._id);
+  //     let savedQuiz;
+
+  //     if (isExistingQuiz) {
+  //       console.log("Updating existing quiz:", editedQuiz);
+  //       savedQuiz = await quizzesClient.updateQuiz(editedQuiz);
+  //       dispatch(updateQuiz(savedQuiz));
+  //     } else {
+  //       console.log("Creating new quiz:", editedQuiz);
+  //       savedQuiz = await quizzesClient.createQuizForCourse(
+  //         cid as string,
+  //         editedQuiz
+  //       );
+  //       dispatch(addQuiz(savedQuiz));
+  //     }
+
+  //     navigate(
+  //       `/Kambaz/Courses/${editedQuiz.course}/Quizzes/${editedQuiz._id}`
+  //     );
+  //   } catch (err) {
+  //     console.error("Error saving quiz:", err);
+  //     setError("Failed to save quiz. Please try again.");
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
+
   const handleSave = async () => {
     try {
       setLoading(true);
-
+      const updatedDescription = editorRef.current?.getContent() || "";
+  
+      const quizToSave = {
+        ...editedQuiz,
+        description: updatedDescription,
+      };
+  
       const isExistingQuiz = quizzes.some((q: any) => q._id === editedQuiz._id);
       let savedQuiz;
-
+  
       if (isExistingQuiz) {
-        console.log("Updating existing quiz:", editedQuiz);
-        savedQuiz = await quizzesClient.updateQuiz(editedQuiz);
+        console.log("Updating existing quiz:", quizToSave);
+        savedQuiz = await quizzesClient.updateQuiz(quizToSave);
         dispatch(updateQuiz(savedQuiz));
       } else {
-        console.log("Creating new quiz:", editedQuiz);
+        console.log("Creating new quiz:", quizToSave);
         savedQuiz = await quizzesClient.createQuizForCourse(
           cid as string,
-          editedQuiz
+          quizToSave
         );
         dispatch(addQuiz(savedQuiz));
       }
-
+  
       navigate(
-        `/Kambaz/Courses/${editedQuiz.course}/Quizzes/${editedQuiz._id}`
+        `/Kambaz/Courses/${quizToSave.course}/Quizzes/${quizToSave._id}`
       );
     } catch (err) {
       console.error("Error saving quiz:", err);
@@ -163,15 +232,54 @@ export default function QuizEditor() {
       setLoading(false);
     }
   };
+  
+
+  // const handleSaveAndPublish = async () => {
+  //   try {
+  //     setLoading(true);
+
+  //     const quizToSave = { ...editedQuiz, published: true };
+  //     let savedQuiz;
+
+  //     const isExistingQuiz = quizzes.some((q: any) => q._id === editedQuiz._id);
+  //     if (isExistingQuiz) {
+  //       console.log("Updating and publishing existing quiz:", quizToSave);
+  //       savedQuiz = await quizzesClient.updateQuiz(quizToSave);
+  //       dispatch(updateQuiz(savedQuiz));
+  //     } else {
+  //       console.log("Creating and publishing new quiz:", quizToSave);
+  //       savedQuiz = await quizzesClient.createQuizForCourse(
+  //         cid as string,
+  //         quizToSave
+  //       );
+  //       dispatch(addQuiz(savedQuiz));
+  //     }
+
+  //     navigate(`/Kambaz/Courses/${editedQuiz.course}/Quizzes`);
+  //   } catch (err) {
+  //     console.error("Error saving and publishing quiz:", err);
+  //     setError("Failed to publish quiz. Please try again.");
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
 
   const handleSaveAndPublish = async () => {
     try {
       setLoading(true);
-
-      const quizToSave = { ...editedQuiz, published: true };
-      let savedQuiz;
-
+  
+      // ✅ 从编辑器中拿到当前内容
+      const updatedDescription = editorRef.current?.getContent() || "";
+  
+      const quizToSave = {
+        ...editedQuiz,
+        description: updatedDescription,
+        published: true,
+      };
+  
       const isExistingQuiz = quizzes.some((q: any) => q._id === editedQuiz._id);
+      let savedQuiz;
+  
       if (isExistingQuiz) {
         console.log("Updating and publishing existing quiz:", quizToSave);
         savedQuiz = await quizzesClient.updateQuiz(quizToSave);
@@ -184,8 +292,8 @@ export default function QuizEditor() {
         );
         dispatch(addQuiz(savedQuiz));
       }
-
-      navigate(`/Kambaz/Courses/${editedQuiz.course}/Quizzes`);
+  
+      navigate(`/Kambaz/Courses/${quizToSave.course}/Quizzes`);
     } catch (err) {
       console.error("Error saving and publishing quiz:", err);
       setError("Failed to publish quiz. Please try again.");
@@ -194,6 +302,7 @@ export default function QuizEditor() {
     }
   };
 
+  
   const handleAddQuestion = () => {
     setNewQuestion({
       _id: uuidv4(),
@@ -351,15 +460,21 @@ export default function QuizEditor() {
           <span>Not Published</span>
         </div> */}
         {editedQuiz.published ? ( // ✅ Added
-        <div className="text-success d-flex align-items-center" style={{ gap: "4px" }}>
-          <span>✅ Published</span>
-        </div>
-      ) : (
-        <div className="text-muted d-flex align-items-center" style={{ gap: "4px" }}>
-          <FaBan />
-          <span>Not Published</span>
-        </div>
-      )}
+          <div
+            className="text-success d-flex align-items-center"
+            style={{ gap: "4px" }}
+          >
+            <span>✅ Published</span>
+          </div>
+        ) : (
+          <div
+            className="text-muted d-flex align-items-center"
+            style={{ gap: "4px" }}
+          >
+            <FaBan />
+            <span>Not Published</span>
+          </div>
+        )}
         {/* <Button
           variant="outline-secondary"
           size="sm"
@@ -392,7 +507,9 @@ export default function QuizEditor() {
           </Dropdown.Toggle>
 
           <Dropdown.Menu>
-            <Dropdown.Item onClick={() => navigate(`/Kambaz/Courses/${cid}/Quizzes/${qid}`)}>
+            <Dropdown.Item
+              onClick={() => navigate(`/Kambaz/Courses/${cid}/Quizzes/${qid}`)}
+            >
               View
             </Dropdown.Item>
             {/* <Dropdown.Item
@@ -404,18 +521,21 @@ export default function QuizEditor() {
               {editedQuiz.published ? "Unpublish" : "Publish"}
             </Dropdown.Item> */}
             <Dropdown.Item
-            onClick={async () => {
-              const updated = { ...editedQuiz, published: !editedQuiz.published };
-              setEditedQuiz(updated);
-              try {
-                const saved = await quizzesClient.updateQuiz(updated);
-                dispatch(updateQuiz(saved));
-              } catch (error) {
-                console.error("Failed to toggle publish status:", error);
-              }
-            }}
+              onClick={async () => {
+                const updated = {
+                  ...editedQuiz,
+                  published: !editedQuiz.published,
+                };
+                setEditedQuiz(updated);
+                try {
+                  const saved = await quizzesClient.updateQuiz(updated);
+                  dispatch(updateQuiz(saved));
+                } catch (error) {
+                  console.error("Failed to toggle publish status:", error);
+                }
+              }}
             >
-            {editedQuiz.published ? "Unpublish" : "Publish"}
+              {editedQuiz.published ? "Unpublish" : "Publish"}
             </Dropdown.Item>
           </Dropdown.Menu>
         </Dropdown>
@@ -441,7 +561,7 @@ export default function QuizEditor() {
             </Form.Group>
 
             {/* Instructions */}
-            <Form.Group className="mb-3">
+            {/* <Form.Group className="mb-3">
               <Form.Label>Quiz Instructions:</Form.Label>
               <Editor
                 tinymceScriptSrc="/tinymce/tinymce.min.js"
@@ -465,6 +585,29 @@ export default function QuizEditor() {
                 onEditorChange={(content: any) =>
                   setEditedQuiz({ ...editedQuiz, description: content })
                 }
+              />
+            </Form.Group> */}
+            <Form.Group className="mb-3">
+              <Form.Label>Quiz Instructions:</Form.Label>
+              <Editor
+                tinymceScriptSrc="/tinymce/tinymce.min.js"
+                onInit={(_, editor: any) => (editorRef.current = editor)}
+                initialValue={editedQuiz.description}
+                init={{
+                  base_url: "/tinymce",
+                  height: 300,
+                  menubar: "file edit view insert format tools table help",
+                  plugins:
+                    "advlist autolink lists link image charmap preview anchor searchreplace visualblocks code fullscreen insertdatetime media table paste help wordcount codesample",
+                  toolbar:
+                    "undo redo | blocks | bold italic underline strikethrough | " +
+                    "forecolor backcolor | alignleft aligncenter alignright alignjustify | " +
+                    "bullist numlist outdent indent | removeformat | help | table codesample fullscreen",
+                  statusbar: true,
+                  branding: false,
+                  content_style:
+                    "body { font-family:Helvetica,Arial,sans-serif; font-size:14px }",
+                }}
               />
             </Form.Group>
 
