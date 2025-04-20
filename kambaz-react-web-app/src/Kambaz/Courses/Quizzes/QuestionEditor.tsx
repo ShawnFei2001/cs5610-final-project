@@ -283,30 +283,30 @@ export default function QuestionEditor({ question, onChange, onCancel, onSave }:
     const [editingIndex, setEditingIndex] = useState<number | null>(null);
 
     const handleOptionChange = (index: number, value: string) => {
-      const updatedOptions = [...(question.options || [])];
+      const updatedOptions = [...(question.choices || [])];
       updatedOptions[index] = value;
-      handleInputChange("options", updatedOptions);
+      handleInputChange("choices", updatedOptions);
     };
 
     const addOption = () => {
-      const updatedOptions = [...(question.options || []), ""];
-      handleInputChange("options", updatedOptions);
+      const updatedOptions = [...(question.choices || []), ""];
+      handleInputChange("choices", updatedOptions);
       // Set the new option to editing mode
       setEditingIndex(updatedOptions.length - 1);
     };
 
     const removeOption = (index: number) => {
       // Simply remove the option without additional index adjustments
-      const updatedOptions = [...(question.options || [])];
+      const updatedOptions = [...(question.choices || [])];
       updatedOptions.splice(index, 1);
-      handleInputChange("options", updatedOptions);
+      handleInputChange("choices", updatedOptions);
       setEditingIndex(null);
     };
 
     const setCorrectAnswer = (index: number) => {
       // Only allow setting correct answer in edit mode
       if (editingIndex === index) {
-        handleInputChange("correctAnswer", index);
+        handleInputChange("correctAnswer", question.choices?.[index]);
       }
     };
     
@@ -406,7 +406,7 @@ export default function QuestionEditor({ question, onChange, onCancel, onSave }:
         {/* Answer Options */}
         <Form.Group className="mb-4">
           <Form.Label className="fw-bold">Answers:</Form.Label>
-          {(question.options || []).map((option: string, index: number) => (
+          {(question.choices || []).map((option: string, index: number) => (
             <div 
               key={index} 
               className={`d-flex align-items-center mb-3 answer-row ${editingIndex === index ? 'border border-primary rounded p-2' : ''}`}
@@ -414,7 +414,7 @@ export default function QuestionEditor({ question, onChange, onCancel, onSave }:
             >
               {/* Left icon area */}
               <div style={{ width: '30px' }}>
-                {question.correctAnswer === index && (
+                {question.correctAnswer === option && (
                   <FaArrowRight 
                     className="text-success" 
                     style={{ fontSize: '18px' }}
@@ -426,8 +426,8 @@ export default function QuestionEditor({ question, onChange, onCancel, onSave }:
               <div 
                 style={{ 
                   width: '130px',
-                  fontWeight: question.correctAnswer === index ? 'bold' : 'normal',
-                  color: question.correctAnswer === index ? '#4CAF50' : 'inherit',
+                  fontWeight: question.correctAnswer === option ? 'bold' : 'normal',
+                  color: question.correctAnswer === option ? '#4CAF50' : 'inherit',
                   cursor: 'pointer'
                 }}
                 onClick={(e) => {
@@ -441,7 +441,7 @@ export default function QuestionEditor({ question, onChange, onCancel, onSave }:
                   }
                 }}
               >
-                {question.correctAnswer === index ? "Correct Answer" : "Possible Answer"}
+                {question.correctAnswer === option ? "Correct Answer" : "Possible Answer"}
               </div>
               
               {/* Input field - shorter width and click to enter edit mode */}
@@ -449,7 +449,7 @@ export default function QuestionEditor({ question, onChange, onCancel, onSave }:
                 type="text"
                 value={option}
                 onChange={(e) => handleOptionChange(index, e.target.value)}
-                className={question.correctAnswer === index ? "border-success" : ""}
+                className={question.correctAnswer === option ? "border-success" : ""}
                 readOnly={editingIndex !== index}
                 onClick={(e) => {
                   e.stopPropagation();
@@ -529,24 +529,24 @@ export default function QuestionEditor({ question, onChange, onCancel, onSave }:
   function renderFillBlankEditor() {
     const [editingIndex, setEditingIndex] = useState<number | null>(null);
   
-    const answers = question.correctAnswers || [];
+    const answers = question.choices || [];
   
     const handleAnswerChange = (index: number, value: string) => {
       const updated = [...answers];
       updated[index] = value;
-      handleInputChange("correctAnswers", updated);
+      handleInputChange("choices", updated);
     };
   
     const addAnswer = () => {
       const updated = [...answers, ""];
-      handleInputChange("correctAnswers", updated);
+      handleInputChange("choices", updated);
       setEditingIndex(updated.length - 1); // fix: set to last added index
     };
   
     const removeAnswer = (index: number) => {
       const updated = [...answers];
       updated.splice(index, 1);
-      handleInputChange("correctAnswers", updated);
+      handleInputChange("choices", updated);
       setEditingIndex(null);
     };
   
