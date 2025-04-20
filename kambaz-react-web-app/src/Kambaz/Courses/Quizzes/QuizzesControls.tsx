@@ -1,13 +1,14 @@
 // src/Kambaz/Courses/Quizzes/QuizzesControls.tsx
 import { FaPlus } from "react-icons/fa6";
-import { Button, Form, FormControl, Modal } from "react-bootstrap";
-import { IoEllipsisVertical } from "react-icons/io5";
+import { Dropdown,Button, Form, FormControl, Modal } from "react-bootstrap";
+// import { IoEllipsisVertical } from "react-icons/io5";
 import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { useDispatch } from "react-redux";
+import { useSelector } from "react-redux"; 
 import { addQuiz } from "./reducer";
 import * as quizzesClient from "./client";
 import { v4 as uuidv4 } from "uuid";
+import QuizMenu from "./QuizMenu";
 
 export default function QuizzesControls({
   quizName,
@@ -19,8 +20,8 @@ export default function QuizzesControls({
   addQuiz: (quiz: any) => void;
 }) {
   const { cid } = useParams();
-  const navigate = useNavigate();
-
+  // const navigate = useNavigate();
+  const quizzes = useSelector((state: any) => state.quizzesReducer.quizzes || []);
   const [show, setShow] = useState(false);
   const handleClose = () => setShow(false);
   const handleShow = () => setShow(true);
@@ -68,8 +69,9 @@ export default function QuizzesControls({
           Quiz
         </Button>
         <Button variant="secondary" size="lg">
-          <IoEllipsisVertical className="fs-4" />
+          <QuizMenu quizzes={quizzes} />
         </Button>
+        
       </div>
 
       {/* Modal for creating a new quiz */}

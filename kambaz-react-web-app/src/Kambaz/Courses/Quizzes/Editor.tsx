@@ -1,17 +1,8 @@
 import { useEffect, useRef, useState } from "react";
+import { Dropdown } from "react-bootstrap";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import {
-  Tabs,
-  Tab,
-  Form,
-  Button,
-  FormControl,
-  Col,
-  Row,
-  Card,
-  InputGroup,
-} from "react-bootstrap";
+import {Tabs,Tab,Form,Button,FormControl,Col,Row,Card,InputGroup,} from "react-bootstrap";
 // import "react-quill/dist/quill.snow.css";
 import { updateQuiz, addQuiz } from "./reducer";
 import * as quizzesClient from "./client";
@@ -20,12 +11,7 @@ import { GoX } from "react-icons/go";
 import { FaBan } from "react-icons/fa";
 import { HiDotsVertical } from "react-icons/hi";
 import QuestionEditor from "./QuestionEditor";
-import {
-  addQuestion,
-  updateQuestion,
-  deleteQuestion,
-  setQuestions,
-} from "./reducer";
+import {addQuestion,updateQuestion,deleteQuestion,setQuestions} from "./reducer";
 import { v4 as uuidv4 } from "uuid";
 
 interface QuizType {
@@ -357,14 +343,24 @@ export default function QuizEditor() {
             ? questions.reduce((sum, q) => sum + (q.points || 0), 0)
             : editedQuiz.points}
         </div>
-        <div
+        {/* <div
           className="text-muted d-flex align-items-center"
           style={{ gap: "4px" }}
         >
           <FaBan />
           <span>Not Published</span>
+        </div> */}
+        {editedQuiz.published ? ( // ✅ Added
+        <div className="text-success d-flex align-items-center" style={{ gap: "4px" }}>
+          <span>✅ Published</span>
         </div>
-        <Button
+      ) : (
+        <div className="text-muted d-flex align-items-center" style={{ gap: "4px" }}>
+          <FaBan />
+          <span>Not Published</span>
+        </div>
+      )}
+        {/* <Button
           variant="outline-secondary"
           size="sm"
           style={{
@@ -377,7 +373,52 @@ export default function QuizEditor() {
           }}
         >
           <HiDotsVertical />
-        </Button>
+        </Button> */}
+        <Dropdown align="end">
+          <Dropdown.Toggle
+            as={Button}
+            variant="outline-secondary"
+            size="sm"
+            style={{
+              backgroundColor: "rgb(240, 240, 240)",
+              borderRadius: "6px",
+              padding: "6px 4px",
+              display: "flex",
+              alignItems: "center",
+              border: "1px solid rgb(200, 200, 200)",
+            }}
+          >
+            <HiDotsVertical />
+          </Dropdown.Toggle>
+
+          <Dropdown.Menu>
+            <Dropdown.Item onClick={() => navigate(`/Kambaz/Courses/${cid}/Quizzes/${qid}`)}>
+              View
+            </Dropdown.Item>
+            {/* <Dropdown.Item
+              onClick={() => {
+                const updated = { ...editedQuiz, published: !editedQuiz.published };
+                setEditedQuiz(updated);
+              }}
+            >
+              {editedQuiz.published ? "Unpublish" : "Publish"}
+            </Dropdown.Item> */}
+            <Dropdown.Item
+            onClick={async () => {
+              const updated = { ...editedQuiz, published: !editedQuiz.published };
+              setEditedQuiz(updated);
+              try {
+                const saved = await quizzesClient.updateQuiz(updated);
+                dispatch(updateQuiz(saved));
+              } catch (error) {
+                console.error("Failed to toggle publish status:", error);
+              }
+            }}
+            >
+            {editedQuiz.published ? "Unpublish" : "Publish"}
+            </Dropdown.Item>
+          </Dropdown.Menu>
+        </Dropdown>
       </div>
 
       <hr />
@@ -404,7 +445,7 @@ export default function QuizEditor() {
               <Form.Label>Quiz Instructions:</Form.Label>
               <Editor
                 tinymceScriptSrc="/tinymce/tinymce.min.js"
-                onInit={(evt: any, editor: any) => (editorRef.current = editor)}
+                onInit={(_, editor: any) => (editorRef.current = editor)}
                 initialValue={editedQuiz.description}
                 init={{
                   base_url: "/tinymce",
