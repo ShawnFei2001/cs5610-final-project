@@ -136,7 +136,9 @@ export default function QuizEditor() {
           setEditedQuiz({
             ...editedQuiz,
             ...quizData,
-            dueDate: quizData.dueDate ? formatDateForInput(quizData.dueDate) : "",
+            dueDate: quizData.dueDate
+              ? formatDateForInput(quizData.dueDate)
+              : "",
             availableFrom: quizData.availableFrom
               ? formatDateForInput(quizData.availableFrom)
               : "",
@@ -151,8 +153,24 @@ export default function QuizEditor() {
         console.log("Fetched questions:", questionsData);
 
         if (Array.isArray(questionsData)) {
-          setQuestionsLocal(questionsData);
-          dispatch(setQuestions(questionsData));
+          const completedQuestions = questionsData.map((q) => ({
+            ...q,
+            isEditing: false,
+            correctAnswer:
+              typeof q.correctAnswer === "boolean"
+                ? q.correctAnswer
+                : q.type === "True/False"
+                ? false
+                : q.correctAnswer,
+            choices:
+              Array.isArray(q.choices) || q.type === "Multiple Choice"
+                ? q.choices || []
+                : undefined,
+          }));
+          // setQuestionsLocal(questionsData);
+          // dispatch(setQuestions(questionsData));
+          setQuestionsLocal(completedQuestions);
+          dispatch(setQuestions(completedQuestions));
         }
       } catch (err) {
         console.error("Error fetching quiz data:", err);
@@ -200,15 +218,15 @@ export default function QuizEditor() {
     try {
       setLoading(true);
       const updatedDescription = editorRef.current?.getContent() || "";
-  
+
       const quizToSave = {
         ...editedQuiz,
         description: updatedDescription,
       };
-  
+
       const isExistingQuiz = quizzes.some((q: any) => q._id === editedQuiz._id);
       let savedQuiz;
-  
+
       if (isExistingQuiz) {
         console.log("Updating existing quiz:", quizToSave);
         savedQuiz = await quizzesClient.updateQuiz(quizToSave);
@@ -221,7 +239,7 @@ export default function QuizEditor() {
         );
         dispatch(addQuiz(savedQuiz));
       }
-  
+
       navigate(
         `/Kambaz/Courses/${quizToSave.course}/Quizzes/${quizToSave._id}`
       );
@@ -232,7 +250,6 @@ export default function QuizEditor() {
       setLoading(false);
     }
   };
-  
 
   // const handleSaveAndPublish = async () => {
   //   try {
@@ -267,19 +284,19 @@ export default function QuizEditor() {
   const handleSaveAndPublish = async () => {
     try {
       setLoading(true);
-  
+
       // ✅ 从编辑器中拿到当前内容
       const updatedDescription = editorRef.current?.getContent() || "";
-  
+
       const quizToSave = {
         ...editedQuiz,
         description: updatedDescription,
         published: true,
       };
-  
+
       const isExistingQuiz = quizzes.some((q: any) => q._id === editedQuiz._id);
       let savedQuiz;
-  
+
       if (isExistingQuiz) {
         console.log("Updating and publishing existing quiz:", quizToSave);
         savedQuiz = await quizzesClient.updateQuiz(quizToSave);
@@ -292,7 +309,7 @@ export default function QuizEditor() {
         );
         dispatch(addQuiz(savedQuiz));
       }
-  
+
       navigate(`/Kambaz/Courses/${quizToSave.course}/Quizzes`);
     } catch (err) {
       console.error("Error saving and publishing quiz:", err);
@@ -302,7 +319,6 @@ export default function QuizEditor() {
     }
   };
 
-  
   const handleAddQuestion = () => {
     setNewQuestion({
       _id: uuidv4(),
