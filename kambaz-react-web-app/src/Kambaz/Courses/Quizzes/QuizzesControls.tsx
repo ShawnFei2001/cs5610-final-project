@@ -9,46 +9,52 @@ import { addQuiz } from "./reducer";
 import * as quizzesClient from "./client";
 import { v4 as uuidv4 } from "uuid";
 
-export default function QuizzesControls({ 
-  quizName, 
-  setQuizName, 
-  addQuiz 
-}: { 
-  quizName: string; 
-  setQuizName: (title: string) => void; 
-  addQuiz: (quiz: any) => void; 
+export default function QuizzesControls({
+  quizName,
+  setQuizName,
+  addQuiz,
+}: {
+  quizName: string;
+  setQuizName: (title: string) => void;
+  addQuiz: (quiz: any) => void;
 }) {
   const { cid } = useParams();
   const navigate = useNavigate();
-  
+
   const [show, setShow] = useState(false);
   const handleClose = () => setShow(false);
   const handleShow = () => setShow(true);
+  const [quizPoints, setQuizPoints] = useState(100);
 
   const handleAddQuiz = () => {
     const newQuiz = {
       _id: uuidv4(),
       title: quizName || "New Quiz",
       description: "",
-      points: 100,
+      points: quizPoints,
       dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
       availableFrom: new Date().toISOString(),
-      availableUntil: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
+      availableUntil: new Date(
+        Date.now() + 14 * 24 * 60 * 60 * 1000
+      ).toISOString(),
       course: cid,
       questions: 0,
-      published: false
+      published: false,
     };
-    
+
     addQuiz(newQuiz);
     setShow(false);
   };
 
   return (
-    <div id="wd-quizzes-controls" className="d-flex align-items-center justify-content-between">
+    <div
+      id="wd-quizzes-controls"
+      className="d-flex align-items-center justify-content-between"
+    >
       <div className="flex-grow-1 me-3">
-        <FormControl 
-          className="w-100 border-secondary" 
-          placeholder="Search for Quiz" 
+        <FormControl
+          className="w-100 border-secondary"
+          placeholder="Search for Quiz"
         />
       </div>
 
@@ -65,7 +71,7 @@ export default function QuizzesControls({
           <IoEllipsisVertical className="fs-4" />
         </Button>
       </div>
-      
+
       {/* Modal for creating a new quiz */}
       <Modal show={show} onHide={handleClose} centered>
         <Modal.Header closeButton>
@@ -81,13 +87,13 @@ export default function QuizzesControls({
                 placeholder="Quiz Title"
               />
             </Form.Group>
-            
+
             <Form.Group className="mb-3">
               <Form.Label>Points</Form.Label>
-              <FormControl
+              <Form.Control
                 type="number"
-                defaultValue={100}
-                min={0}
+                value={quizPoints}
+                onChange={(e) => setQuizPoints(Number(e.target.value))}
               />
             </Form.Group>
           </Form>
@@ -96,9 +102,7 @@ export default function QuizzesControls({
           <Button variant="secondary" onClick={handleClose}>
             Cancel
           </Button>
-          <Button onClick={handleAddQuiz}>
-            Add Quiz
-          </Button>
+          <Button onClick={handleAddQuiz}>Add Quiz</Button>
         </Modal.Footer>
       </Modal>
     </div>

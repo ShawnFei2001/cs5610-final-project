@@ -11,13 +11,15 @@ import * as quizzesClient from "./client";
 import { BsGripVertical } from "react-icons/bs";
 
 export default function Quizzes() {
-  console.log("🧩 Quizzes component mounted"); 
-  
+  console.log("🧩 Quizzes component mounted");
+
   const { currentUser } = useSelector((state: any) => state.accountReducer);
   const { cid } = useParams();
-  const { quizzes } = useSelector((state: any) => state.quizzesReducer || { quizzes: [] });
+  const { quizzes } = useSelector(
+    (state: any) => state.quizzesReducer || { quizzes: [] }
+  );
   const dispatch = useDispatch();
-  
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [quizName, setQuizName] = useState("");
@@ -25,15 +27,15 @@ export default function Quizzes() {
   useEffect(() => {
     async function fetchQuizzes() {
       if (!cid) return;
-      
+
       setLoading(true);
       setError(null);
-      
+
       try {
         console.log("Fetching quizzes for course:", cid);
         const data = await quizzesClient.findQuizzesForCourse(cid);
         console.log("Quizzes fetched:", data);
-        
+
         if (Array.isArray(data)) {
           dispatch(setQuizzes(data));
         } else {
@@ -52,14 +54,14 @@ export default function Quizzes() {
 
   const handleSaveQuiz = async (quiz: any) => {
     if (!cid) return;
-    
+
     setError(null);
-    
+
     try {
       console.log("Creating quiz for course:", cid, quiz);
       const createdQuiz = await quizzesClient.createQuizForCourse(cid, quiz);
       console.log("Quiz created:", createdQuiz);
-      
+
       dispatch(addQuiz(createdQuiz));
       setQuizName("");
     } catch (error) {
@@ -87,7 +89,27 @@ export default function Quizzes() {
     return `${datePart} at ${timePart.toLowerCase()}`;
   };
 
-  const courseQuizzes = Array.isArray(quizzes) 
+  useEffect(() => {
+    const fetchQuestionCounts = async () => {
+      const updated = await Promise.all(
+        courseQuizzes.map(async (q: any) => {
+          const questions = await quizzesClient.getQuestions(q._id);
+          return { ...q, questionsCount: questions.length };
+        })
+      );
+
+      // Replace updated quizzes only for this course
+      const otherCourses = quizzes.filter((q: any) => q.course !== cid);
+      dispatch({
+        type: "quizzes/setQuizzes",
+        payload: [...otherCourses, ...updated],
+      });
+    };
+
+    fetchQuestionCounts();
+  }, [quizzes.length, cid]);
+
+  const courseQuizzes = Array.isArray(quizzes)
     ? quizzes.filter((quiz: any) => quiz.course === cid)
     : [];
 
@@ -129,12 +151,18 @@ export default function Quizzes() {
           ) : (
             courseQuizzes.map((quiz: any) => {
               const now = new Date();
-              const availableFrom = quiz.availableFrom ? new Date(quiz.availableFrom) : null;
-              const availableUntil = quiz.availableUntil ? new Date(quiz.availableUntil) : null;
+              const availableFrom = quiz.availableFrom
+                ? new Date(quiz.availableFrom)
+                : null;
+              const availableUntil = quiz.availableUntil
+                ? new Date(quiz.availableUntil)
+                : null;
 
               let availabilityText = "Availability Unknown";
               if (availableFrom && now < availableFrom) {
-                availabilityText = `Not available until ${formatDateTime(quiz.availableFrom)}`;
+                availabilityText = `Not available until ${formatDateTime(
+                  quiz.availableFrom
+                )}`;
               } else if (availableUntil && now > availableUntil) {
                 availabilityText = "Closed";
               } else {
@@ -157,7 +185,9 @@ export default function Quizzes() {
                           {quiz.title}
                         </Link>
                         <div className="text-muted small">
-                          {availabilityText.startsWith("Not available until") ? (
+                          {availabilityText.startsWith(
+                            "Not available until"
+                          ) ? (
                             <>
                               <strong>Not available until </strong>
                               <span className="text-danger">
@@ -165,33 +195,45 @@ export default function Quizzes() {
                               </span>{" "}
                               | <strong>Due </strong>
                               <span className="text-danger">
-                                {quiz.dueDate ? formatDateTime(quiz.dueDate) : "Not set"}
+                                {quiz.dueDate
+                                  ? formatDateTime(quiz.dueDate)
+                                  : "Not set"}
                               </span>
                             </>
                           ) : availabilityText === "Closed" ? (
                             <>
                               <strong>Closed</strong> | <strong>Due </strong>
                               <span className="text-danger">
-                                {quiz.dueDate ? formatDateTime(quiz.dueDate) : "Not set"}
+                                {quiz.dueDate
+                                  ? formatDateTime(quiz.dueDate)
+                                  : "Not set"}
                               </span>
                             </>
                           ) : (
                             <>
                               <strong>Available</strong>{" "}
                               <span className="text-danger">
-                                {quiz.availableFrom ? formatDateTime(quiz.availableFrom) : "Not set"}
+                                {quiz.availableFrom
+                                  ? formatDateTime(quiz.availableFrom)
+                                  : "Not set"}
                               </span>{" "}
                               | <strong>Due </strong>
                               <span className="text-danger">
-                                {quiz.dueDate ? formatDateTime(quiz.dueDate) : "Not set"}
+                                {quiz.dueDate
+                                  ? formatDateTime(quiz.dueDate)
+                                  : "Not set"}
                               </span>
                             </>
                           )}{" "}
                           | <strong>{quiz.points || 0} pts</strong> |{" "}
-                          <strong>{quiz.questions || 0} Questions</strong>
-                          {currentUser?.role === "STUDENT" && quiz.score !== undefined && (
-                            <> | <strong>Score:</strong> {quiz.score}%</>
-                          )}
+                          <strong>{quiz.questionsCount ?? 0} Questions</strong>
+                          {currentUser?.role === "STUDENT" &&
+                            quiz.score !== undefined && (
+                              <>
+                                {" "}
+                                | <strong>Score:</strong> {quiz.score}%
+                              </>
+                            )}
                         </div>
                       </div>
                     </div>
