@@ -1,42 +1,6 @@
 [
 build
 ]
-  base = "kambaz-react-web-app"
-  publish = "dist"
-  command = "npm run build"
-
-[[
-headers
-]]
-  for = "/*.js"
-  [
-headers.values
-]
-    Content-Type = "application/javascript"
-
-[[
-headers
-]]
-  for = "/*.mjs"
-  [
-headers.values
-]
-    Content-Type = "application/javascript"
-    
-[[
-headers
-]]
-  for = "/*.tsx"
-  [
-headers.values
-]
-    Content-Type = "application/javascript"
-    
-[[
-headers
-]]
-  for = "/*.jsx"
-  [
-headers.values
-]
-    Content-Type = "application/javascript"
+base = "kambaz-react-web-app"
+publish = "dist"
+command = "npm run build"
