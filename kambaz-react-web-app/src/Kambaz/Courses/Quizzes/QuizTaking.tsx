@@ -174,9 +174,6 @@
 //   );
 // }
 
-
-
-
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Alert, Button, Card, Form } from "react-bootstrap";
@@ -192,7 +189,7 @@ const normalizeAnswers = (raw: any): { [key: string]: any } => {
       obj[ans.questionId] = ans.answer;
     });
     return obj;
-  } else if (raw && typeof raw === 'object') {
+  } else if (raw && typeof raw === "object") {
     return raw;
   } else {
     return {};
@@ -216,16 +213,24 @@ export default function QuizTaking() {
 
   useEffect(() => {
     const loadData = async () => {
-      const questionRes = await axios.get(`${QUIZZES_API}/quizzes/${qid}/questions`);
+      const questionRes = await axios.get(
+        `${QUIZZES_API}/quizzes/${qid}/questions`
+      );
       const questionList = questionRes.data;
       setQuestions(questionList);
 
-      const total = questionList.reduce((acc: number, q: any) => acc + q.points, 0);
+      const total = questionList.reduce(
+        (acc: number, q: any) => acc + q.points,
+        0
+      );
       setTotalPoints(total);
 
-      const { data } = await axios.get(`${QUIZZES_API}/quizzes/${qid}/answers`, {
-        withCredentials: true,
-      });
+      const { data } = await axios.get(
+        `${QUIZZES_API}/quizzes/${qid}/answers`,
+        {
+          withCredentials: true,
+        }
+      );
 
       const last = data.lastAttempt || {};
 
@@ -240,13 +245,17 @@ export default function QuizTaking() {
         const normalized = normalizeAnswers(last.answers);
         setAnswers(normalized);
         setScore(last.score || 0);
-        setAttemptDate(last.attemptDate || null);
+        setAttemptDate(
+          last.attemptDate || last.attemptDate || last.submittedAt || null
+        );
         setSubmitted(true);
 
         const computedResults: { [key: string]: boolean } = {};
         questionList.forEach((q: any) => {
           const a = normalized[q._id];
-          computedResults[q._id] = JSON.stringify(String(a)) === JSON.stringify(String(q.correctAnswer));
+          computedResults[q._id] =
+            JSON.stringify(String(a)) ===
+            JSON.stringify(String(q.correctAnswer));
         });
         setResults(computedResults);
       }
@@ -266,7 +275,7 @@ export default function QuizTaking() {
       setScore(data.score);
       setResults(data.results);
       setSubmitted(true);
-      setAttemptDate(data.attemptDate);
+      setAttemptDate(data.attemptDate || new Date().toISOString());
       setAttemptCount((prev) => prev + 1);
       if (attemptCount + 1 >= maxAttempts) {
         setLockedOut(true);
@@ -299,13 +308,16 @@ export default function QuizTaking() {
               setCurrentQuestionIndex(0);
             }}
           >
-            Retake Quiz (Attempt {attemptCount + 1} / {maxAttempts})
+            {/* Retake Quiz (Attempt {attemptCount + 1} / {maxAttempts}) */}
+            Retake Quiz
           </Button>
         )}
       </div>
       <h4 className="mb-3">Quiz Results</h4>
       {attemptDate && (
-        <p className="text-muted mb-3">Last Attempt: {new Date(attemptDate).toLocaleString()}</p>
+        <p className="text-muted mb-3">
+          Last Attempt: {new Date(attemptDate).toLocaleString()}
+        </p>
       )}
       {questions.map((question, idx) => {
         const userAnswer = answers[question._id];
@@ -317,11 +329,18 @@ export default function QuizTaking() {
               <strong>Question {idx + 1}</strong> ({question.points} pts)
             </Card.Header>
             <Card.Body>
-              <div dangerouslySetInnerHTML={{ __html: question.text }} className="mb-2" />
+              <div
+                dangerouslySetInnerHTML={{ __html: question.text }}
+                className="mb-2"
+              />
               <div>
-                <strong>Your Answer:</strong> {userAnswer !== undefined ? String(userAnswer) : "No Answer"}
+                <strong>Your Answer:</strong>{" "}
+                {userAnswer !== undefined ? String(userAnswer) : "No Answer"}
               </div>
-              <Alert variant={isCorrect ? "success" : "danger"} className="mt-2">
+              <Alert
+                variant={isCorrect ? "success" : "danger"}
+                className="mt-2"
+              >
                 {isCorrect ? "Correct" : "Incorrect"}
               </Alert>
             </Card.Body>
@@ -329,7 +348,8 @@ export default function QuizTaking() {
         );
       })}
       <Alert variant="info">
-        Final Score: {score} / {totalPoints} ({Math.round((score! / totalPoints) * 100)}%)
+        Final Score: {score} / {totalPoints} (
+        {Math.round((score! / totalPoints) * 100)}%)
       </Alert>
     </div>
   );
@@ -340,7 +360,8 @@ export default function QuizTaking() {
     return (
       <div className="container mt-4">
         <Alert variant="danger">
-          You have used all your allowed attempts. You cannot take this quiz again.
+          You have used all your allowed attempts. You cannot take this quiz
+          again.
         </Alert>
         {renderSubmittedView()}
       </div>
@@ -362,7 +383,9 @@ export default function QuizTaking() {
                 key={q._id}
                 style={{ cursor: "pointer" }}
                 className={
-                  idx === currentQuestionIndex ? "fw-bold text-primary" : "text-danger"
+                  idx === currentQuestionIndex
+                    ? "fw-bold text-primary"
+                    : "text-danger"
                 }
                 onClick={() => setCurrentQuestionIndex(idx)}
               >
@@ -386,17 +409,21 @@ export default function QuizTaking() {
                 />
                 {currentQuestion.type === "Multiple Choice" && (
                   <Form>
-                    {currentQuestion.choices.map((choice: string, i: number) => (
-                      <Form.Check
-                        key={i}
-                        type="radio"
-                        label={choice}
-                        name={`q-${currentQuestion._id}`}
-                        value={choice}
-                        checked={answers[currentQuestion._id] === choice}
-                        onChange={() => setAnswer(currentQuestion._id, choice)}
-                      />
-                    ))}
+                    {currentQuestion.choices.map(
+                      (choice: string, i: number) => (
+                        <Form.Check
+                          key={i}
+                          type="radio"
+                          label={choice}
+                          name={`q-${currentQuestion._id}`}
+                          value={choice}
+                          checked={answers[currentQuestion._id] === choice}
+                          onChange={() =>
+                            setAnswer(currentQuestion._id, choice)
+                          }
+                        />
+                      )
+                    )}
                   </Form>
                 )}
 
@@ -405,7 +432,9 @@ export default function QuizTaking() {
                     type="text"
                     placeholder="Type your answer here"
                     value={answers[currentQuestion._id] || ""}
-                    onChange={(e) => setAnswer(currentQuestion._id, e.target.value)}
+                    onChange={(e) =>
+                      setAnswer(currentQuestion._id, e.target.value)
+                    }
                   />
                 )}
 
@@ -418,7 +447,9 @@ export default function QuizTaking() {
                         label={String(val)}
                         name={`q-${currentQuestion._id}`}
                         value={String(val)}
-                        checked={String(answers[currentQuestion._id]) === String(val)}
+                        checked={
+                          String(answers[currentQuestion._id]) === String(val)
+                        }
                         onChange={() => setAnswer(currentQuestion._id, val)}
                       />
                     ))}
@@ -438,7 +469,9 @@ export default function QuizTaking() {
             </Button>
 
             {currentQuestionIndex < questions.length - 1 ? (
-              <Button onClick={() => setCurrentQuestionIndex((prev) => prev + 1)}>
+              <Button
+                onClick={() => setCurrentQuestionIndex((prev) => prev + 1)}
+              >
                 Next →
               </Button>
             ) : (
