@@ -57,3 +57,7 @@ export const deleteQuestion = async (quizId: string, questionId: string) => {
     const { data } = await axios.delete(`${QUIZZES_API}/quizzes/${quizId}/questions/${questionId}`, { withCredentials: true });
     return data;
 };
+export const getLastAttemptWithMeta = async (quizId: string) => {
+    const { data } = await axios.get(`${QUIZZES_API}/quizzes/${quizId}/answers`, { withCredentials: true });
+    return data;
+  };

@@ -5,6 +5,8 @@ import { GoArrowRight } from "react-icons/go";
 import { HiOutlineFlag, HiPencilAlt } from "react-icons/hi";
 import { useParams, useNavigate } from "react-router-dom";
 import * as quizzesClient from "./client";
+import { useSelector } from "react-redux";
+
 
 
 export default function QuizPreview() {
@@ -18,6 +20,9 @@ export default function QuizPreview() {
   const [score, setScore] = useState(0);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [savedTime, setSavedTime] = useState<string>(new Date().toLocaleTimeString());
+  const [attemptCount, setAttemptCount] = useState(0);
+  const { currentUser } = useSelector((state: any) => state.accountReducer);
+  const displayAttempt = submitted ? attemptCount : attemptCount + 1;
 
   const [quiz, setQuiz] = useState<any>({
     _id: qid,
@@ -28,7 +33,29 @@ export default function QuizPreview() {
   });
   const [loading, setLoading] = useState(true);
   const [fetchError, setFetchError] = useState<string | null>(null);
+  const [attemptLimitReached, setAttemptLimitReached] = useState(false);
+  useEffect(() => {
+    const checkAttempts = async () => {
+      const result = await quizzesClient.getLastAttemptWithMeta(qid!);
 
+      if (result) {
+        const { quiz, attemptCount, lastAttempt } = result;
+        setQuiz((prev: any) => ({ ...prev, ...quiz, attemptCount}));
+        setAttemptCount(attemptCount); 
+        setAnswers(
+          (lastAttempt?.answers || []).reduce((acc: any, a: any) => {
+            acc[a.questionId] = a.answer;
+            return acc;
+          }, {})
+        );
+        setSubmitted(!!lastAttempt);
+        if (quiz.multipleAttempts && attemptCount >= quiz.maxAttempts) {
+          setAttemptLimitReached(true);
+        }
+      }
+    };
+    if (qid) checkAttempts();
+  }, [qid]);
 
   useEffect(() => {
     const fetchQuizData = async () => {
@@ -52,6 +79,8 @@ export default function QuizPreview() {
             startedAt: quizData.startedAt || new Date().toLocaleTimeString(),
             showCorrectAnswers: quizData.showCorrectAnswers || false,
             questions: questionsData,
+            multipleAttempts: quizData.multipleAttempts ?? false,
+            maxAttempts: quizData.maxAttempts ?? 1,
           });
         }
       } catch (err: any) {
@@ -150,6 +179,7 @@ export default function QuizPreview() {
     
     setScore(total);
     setSubmitted(true);
+    setAttemptCount((prev) => prev + 1);
   };
   
   // Return to quiz editor
@@ -329,15 +359,17 @@ return (
       </Card.Body>
     </Card>
 
-    <Button
-      variant="light"
-      onClick={handleKeepEditing}
-      className="w-100 text-start px-3 py-2 border rounded mb-4"
-      style={{ backgroundColor: "#f8f9fa" }}
-    >
-      <HiPencilAlt className="me-2" style={{ fontSize: "18px" }} />
-      Keep Editing This Quiz
-    </Button>
+    {currentUser?.role === "FACULTY" && (
+      <Button
+        variant="light"
+        onClick={handleKeepEditing}
+        className="w-100 text-start px-3 py-2 border rounded mb-4"
+        style={{ backgroundColor: "#f8f9fa" }}
+      >
+        <HiPencilAlt className="me-2" style={{ fontSize: "18px" }} />
+        Keep Editing This Quiz
+      </Button>
+    )}
 
     {/* Questions Navigation */}
     <div className="mb-4">
@@ -363,11 +395,16 @@ return (
     </div>
 
     {submitted && (
-      <Alert variant="success" className="mt-4">
-        <h5>Quiz Results</h5>
-        <p>Your Score: {score} out of {totalPoints} ({((score / totalPoints) * 100).toFixed(1)}%)</p>
-      </Alert>
-    )}
+    <Alert variant="success" className="mt-4">
+      <h5>Quiz Results</h5>
+      <p>Your Score: {score} out of {totalPoints} ({((score / totalPoints) * 100).toFixed(1)}%)</p>
+      {quiz.multipleAttempts && (
+        <p className="mt-2">
+        Attempt used: <strong>{attemptCount}</strong> / {quiz.maxAttempts}
+        </p>
+      )}
+    </Alert>
+)}
   </div>
 );
 }

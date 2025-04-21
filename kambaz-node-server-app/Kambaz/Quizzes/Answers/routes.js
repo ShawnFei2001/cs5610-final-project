@@ -3,6 +3,7 @@ import * as questionsDao from "../Questions/dao.js"; // Fixed path
 import * as answersDao from "./dao.js";  // Fixed path
 import AnswerModel from "./model.js";
 import QuestionModel from "../Questions/model.js";
+import * as quizzesDao from "../dao.js";
 
 
 export default function AnswerRoutes(app) {
@@ -36,19 +37,40 @@ export default function AnswerRoutes(app) {
       }
     });
   
+    // app.get("/api/quizzes/:quizId/answers", async (req, res) => {
+    //   const currentUser = req.session["currentUser"];
+    //   if (!currentUser) return res.sendStatus(403);
+      
+    //   try {
+    //     const lastAttempt = await answersDao.findLatestAnswer(req.params.quizId, currentUser._id);
+    //     res.json(lastAttempt);
+    //   } catch (e) {
+    //     console.error("Error fetching answers:", e);
+    //     res.status(500).json({ message: e.message });
+    //   }
+    // });
     app.get("/api/quizzes/:quizId/answers", async (req, res) => {
       const currentUser = req.session["currentUser"];
       if (!currentUser) return res.sendStatus(403);
-      
+    
       try {
+        const quiz = await quizzesDao.findQuizById(req.params.quizId);
+        const attemptCount = await AnswerModel.countDocuments({
+          quizId: req.params.quizId,
+          userId: currentUser._id,
+        });
         const lastAttempt = await answersDao.findLatestAnswer(req.params.quizId, currentUser._id);
-        res.json(lastAttempt);
+        
+        res.json({
+          quiz,
+          attemptCount,
+          lastAttempt,
+        });
       } catch (e) {
         console.error("Error fetching answers:", e);
         res.status(500).json({ message: e.message });
       }
     });
-    
     // Load previous answer progress
     app.get("/api/quiz-attempts/:qid", async (req, res) => {
       const currentUser = req.session["currentUser"];
