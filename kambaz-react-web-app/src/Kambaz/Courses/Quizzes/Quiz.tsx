@@ -7,7 +7,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import * as quizzesClient from "./client";
 
 
-export default function QuizPreview() {
+export default function Quiz() {
   const { cid, qid } = useParams();
   const navigate = useNavigate();
   
