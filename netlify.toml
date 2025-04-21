@@ -1,16 +1,10 @@
 [
 build
 ]
-  # Path to the frontend directory (modify this to match your structure)
-  base = "kambaz-react-web-app/"
-  
-  # The directory to publish (output by your build)
-  publish = "dist/"  # For Vite projects (use "build/" for Create React App)
-  
-  # Build command
+  base = "kambaz-react-web-app"
+  publish = "dist"
   command = "npm run build"
 
-# Set proper MIME types
 [[
 headers
 ]]
