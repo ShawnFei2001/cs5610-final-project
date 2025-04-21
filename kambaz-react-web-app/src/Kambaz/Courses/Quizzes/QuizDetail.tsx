@@ -155,7 +155,8 @@ export default function QuizDetail() {
 
       {/* Student: Start Quiz */}
       {currentUser?.role === "STUDENT" && (
-        <div className="d-flex justify-content-center mb-3">
+        <div className="d-flex justify-content-center mb-3"
+        onClick={() => navigate(`/Kambaz/Courses/${cid}/Quizzes/${qid}/quiz`)}>
           <button className="btn btn-primary px-4">Start Quiz</button>
         </div>
       )}

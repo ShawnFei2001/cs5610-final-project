@@ -11,6 +11,7 @@ import { useSelector } from "react-redux";
 import QuizDetail from "./Quizzes/QuizDetail";
 import QuizEditor from "./Quizzes/Editor";
 import QuizPreview from "./Quizzes/QuizPreview";
+import Quiz from "./Quizzes/Quiz";
 
 export default function Courses() {
   const { cid } = useParams();
@@ -40,6 +41,7 @@ export default function Courses() {
             <Route path="Quizzes/:qid" element={<QuizDetail />} />
             <Route path="Quizzes/:qid/edit" element={<QuizEditor />} />
             <Route path="Quizzes/:qid/preview" element={<QuizPreview />} />
+            <Route path="Quizzes/:qid/quiz" element={<Quiz />} />
             <Route path="People" element={<PeopleTable />} />
           </Routes>
         </div>
