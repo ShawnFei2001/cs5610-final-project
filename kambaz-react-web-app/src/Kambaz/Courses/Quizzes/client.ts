@@ -1,7 +1,7 @@
 // src/Kambaz/Courses/Quizzes/client.ts
 import axios from "axios";
 
-const REMOTE_SERVER = import.meta.env.VITE_REMOTE_SERVER || "http://localhost:4000";
+const REMOTE_SERVER = import.meta.env.VITE_REMOTE_SERVER_A6 || "http://localhost:4000";
 const QUIZZES_API = `${REMOTE_SERVER}/api`;
 
 export const createQuizForCourse = async (courseId: string, quiz: any) => {
