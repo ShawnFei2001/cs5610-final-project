@@ -2,11 +2,12 @@
 import mongoose from "mongoose";
 
 const answerSchema = new mongoose.Schema({
-  quizId: { type: mongoose.Schema.Types.ObjectId, ref: "QuizModel", required: true },
-  userId: { type: mongoose.Schema.Types.ObjectId, ref: "UserModel", required: true },
+  // quizId: { type: mongoose.Schema.Types.ObjectId, ref: "QuizModel", required: true },
+  quizId: { type: String },
+  userId: { type: String, ref: "UserModel"   },
   answers: [
     {
-      questionId: { type: mongoose.Schema.Types.ObjectId, ref: "QuestionModel" },
+      questionId: { type: String, ref: "QuestionModel" },
       answer: mongoose.Schema.Types.Mixed,
     }
   ],

@@ -13,6 +13,7 @@ import ModuleRoutes from "./Kambaz/Modules/routes.js";
 import AssignmentRoutes from "./Kambaz/Assignments/routes.js";
 import EnrollmentRoutes from "./Kambaz/Enrollments/routes.js";
 import QuizRoutes from "./Kambaz/Quizzes/routes.js";
+import AnswerRoutes from "./Kambaz/Quizzes/Answers/routes.js";
 
 
 import { v4 as uuidv4 } from "uuid";
@@ -225,6 +226,7 @@ ModuleRoutes(app);
 AssignmentRoutes(app);
 EnrollmentRoutes(app);
 QuizRoutes(app); // Added Quiz routes
+AnswerRoutes(app);
 // DebugRoutes(app); // Uncomment if you create a separate debug routes file
 
 console.log("All routes initialized");

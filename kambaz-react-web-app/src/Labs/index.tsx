@@ -1,4 +1,3 @@
-
 import { Route, Routes, Navigate } from "react-router";
 import TOC from "./TOC";
 import Lab1 from "./Lab1";
@@ -13,13 +12,13 @@ export default function Labs() {
     <Provider store={store}>
       <div>
         <p>
-          Author: Xiaoyang Fei
+          Author: Xiaoyang Fei, Shuyue Zhang, Mengfei Cai, Xueyang Cui, Ning Li
           Section: CS 5610 Spring 2025 CRN 35649
         </p>
         <p>
           Repository:{" "}
           <a
-            href="https://github.com/ShawnFei2001/kambaz-react-web-app"
+            href="https://github.com/ShawnFei2001/cs5610-final-project.git"
             id="wd-github"
             target="_blank"
             rel="noopener noreferrer"
@@ -41,4 +40,3 @@ export default function Labs() {
     </Provider>
   );
 }
-
