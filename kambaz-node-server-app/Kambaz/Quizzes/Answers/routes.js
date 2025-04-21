@@ -118,12 +118,29 @@ export default function AnswerRoutes(app) {
       let score = 0;
       const results = {};
 
+      // questions.forEach((q) => {
+      //   const a = answers[q._id.toString()];
+      //   const isCorrect = JSON.stringify(a) === JSON.stringify(q.correctAnswer);
+      //   results[q._id.toString()] = isCorrect;
+      //   if (isCorrect) score += q.points;
+      // });
       questions.forEach((q) => {
         const a = answers[q._id.toString()];
-        const isCorrect = JSON.stringify(a) === JSON.stringify(q.correctAnswer);
+        let isCorrect = false;
+      
+        if (q.type === "Fill in the Blank") {
+          isCorrect = q.choices?.some(
+            (choice) =>
+              String(choice).toLowerCase().trim() === String(a).toLowerCase().trim()
+          );
+        } else {
+          isCorrect = JSON.stringify(String(a)) === JSON.stringify(String(q.correctAnswer));
+        }
+      
         results[q._id.toString()] = isCorrect;
         if (isCorrect) score += q.points;
       });
+      
 
       const totalPoints = questions.reduce((acc, q) => acc + q.points, 0);
 
@@ -242,7 +259,7 @@ export default function AnswerRoutes(app) {
     }
   });
 
-  // 前端 QuizPreview 需要的元数据接口
+
   app.get("/api/quiz-attempts/:qid/meta", async (req, res) => {
     const currentUser = req.session["currentUser"];
     if (!currentUser) return res.sendStatus(403);
