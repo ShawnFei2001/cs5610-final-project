@@ -1,6 +1,4 @@
-[
-build
-]
+[build]
 base = "kambaz-react-web-app"
 publish = "dist"
 command = "npm run build"
